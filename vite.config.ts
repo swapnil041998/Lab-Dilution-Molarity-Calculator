@@ -7,7 +7,8 @@ export default defineConfig({
   // Relative asset paths so the build works from any GitHub Pages sub-path.
   base: './',
   test: {
-    environment: 'jsdom',
+    // Calculation tests run in Node; UI tests opt in to jsdom per file.
+    environment: 'node',
     setupFiles: ['./src/test/setup.ts'],
   },
 })
