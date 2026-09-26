@@ -138,37 +138,91 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function lookup(cas: string): Promise<PubChemCompound[] | undefined> {
-  const url = `${API}/${encodeURIComponent(cas)}/property/MolecularFormula,MolecularWeight/JSON`
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const response = await fetch(url)
-    if (response.status === 404) return undefined
-    if (response.ok) {
-      const body = (await response.json()) as {
-        PropertyTable: { Properties: PubChemCompound[] }
-      }
-      return body.PropertyTable.Properties
-    }
-    // 503 means PubChem is busy; back off and retry.
-    if (response.status === 503 || response.status === 429) {
-      await sleep(2000 * 2 ** attempt)
-      continue
-    }
-    throw new Error(`PubChem returned HTTP ${response.status} for ${cas}`)
-  }
-  throw new Error(`PubChem stayed busy for ${cas}`)
+/** What a CAS number lookup on PubChem gave. */
+export type Lookup =
+  | { readonly status: 'found'; readonly compounds: PubChemCompound[] }
+  | { readonly status: 'not-found' }
+  /** PubChem stayed busy or unreachable: nothing is known either way. */
+  | { readonly status: 'unavailable'; readonly reason: string }
+
+export interface LookupOptions {
+  readonly fetch?: typeof fetch
+  readonly wait?: (ms: number) => Promise<void>
+  readonly attempts?: number
 }
+
+/** Statuses that mean "busy, try again later". */
+const RETRY_STATUSES = new Set([429, 500, 502, 503, 504])
+
+/** PubChem's Retry-After when it sends one (capped), else 2, 4, 8, 16 s. */
+function retryDelay(response: Response | undefined, attempt: number): number {
+  const seconds = Number(response?.headers.get('Retry-After') ?? Number.NaN)
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(seconds, 120) * 1000
+  }
+  return 2000 * 2 ** attempt
+}
+
+export async function lookup(
+  cas: string,
+  { fetch: get = fetch, wait = sleep, attempts = 5 }: LookupOptions = {},
+): Promise<Lookup> {
+  const url = `${API}/${encodeURIComponent(cas)}/property/MolecularFormula,MolecularWeight/JSON`
+  let reason = 'no response'
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    let response: Response | undefined
+    try {
+      response = await get(url, { signal: AbortSignal.timeout(30_000) })
+    } catch (error) {
+      reason = `network error (${error instanceof Error ? error.message : String(error)})`
+    }
+    if (response) {
+      if (response.status === 404) return { status: 'not-found' }
+      if (response.ok) {
+        const body = (await response.json()) as {
+          PropertyTable: { Properties: PubChemCompound[] }
+        }
+        return { status: 'found', compounds: body.PropertyTable.Properties }
+      }
+      reason = `HTTP ${response.status}`
+      if (!RETRY_STATUSES.has(response.status)) {
+        return { status: 'unavailable', reason }
+      }
+    }
+    if (attempt < attempts - 1) await wait(retryDelay(response, attempt))
+  }
+  return { status: 'unavailable', reason }
+}
+
+/** Pause before retrying lookups PubChem was too busy for. */
+const COOL_DOWN_MS = 60_000
+
+/**
+ * Fail when more than this share of lookups could not be done: the check
+ * has then not really run. Fewer are reported as warnings, since the data
+ * was checked on earlier runs and PubChem's busy spells are temporary.
+ */
+const MAX_UNAVAILABLE_SHARE = 0.1
 
 async function main(): Promise<void> {
   const problems: string[] = []
   const notFound: string[] = []
   const resolved: string[] = []
+  const unavailable: string[] = []
   let matched = 0
 
-  for (const reagent of REAGENTS) {
-    const compounds = reagent.cas ? await lookup(reagent.cas) : undefined
-    const outcome = checkReagent(reagent, compounds)
+  const record = (reagent: Reagent, found: Lookup | undefined) => {
     const label = `${reagent.id} (${reagent.cas ?? 'no CAS'})`
+    if (found?.status === 'unavailable') {
+      console.log(`UNAVAILABLE ${label}: ${found.reason}`)
+      console.log(
+        `::warning::PubChem could not be reached for ${label}: ${found.reason}`,
+      )
+      unavailable.push(`${label}: ${found.reason}`)
+      return
+    }
+    const compounds = found?.status === 'found' ? found.compounds : undefined
+    const outcome = checkReagent(reagent, compounds)
     switch (outcome.status) {
       case 'match':
         matched++
@@ -200,20 +254,56 @@ async function main(): Promise<void> {
         console.log(`skipped   ${label}: ${outcome.reason}`)
         break
     }
-    await sleep(DELAY_MS)
   }
 
+  // First pass; lookups PubChem was too busy for get a second try later.
+  const busy: Reagent[] = []
+  for (const reagent of REAGENTS) {
+    const found = reagent.cas ? await lookup(reagent.cas) : undefined
+    if (found?.status === 'unavailable') {
+      console.log(`busy      ${reagent.id}: ${found.reason}, will retry`)
+      busy.push(reagent)
+    } else {
+      record(reagent, found)
+    }
+    await sleep(DELAY_MS)
+  }
+  if (busy.length > 0) {
+    console.log(
+      `\nPubChem was busy for ${busy.length} reagents; trying them again in ${COOL_DOWN_MS / 1000} s.`,
+    )
+    await sleep(COOL_DOWN_MS)
+    for (const reagent of busy) {
+      record(reagent, await lookup(reagent.cas!))
+      await sleep(DELAY_MS)
+    }
+  }
+
+  const withCas = REAGENTS.filter((r) => r.cas).length
+  const tooManyUnavailable =
+    unavailable.length > MAX_UNAVAILABLE_SHARE * withCas
   const summary = [
     '## PubChem cross-check',
     '',
     `${matched} of ${REAGENTS.length} reagents confirmed; ` +
-      `${problems.length} formula mismatches; ${notFound.length} CAS numbers not found.`,
+      `${problems.length} formula mismatches; ${notFound.length} CAS numbers not found; ` +
+      `${unavailable.length} not checked because PubChem was unavailable.`,
     '',
     ...(problems.length > 0
       ? [
           '| Reagent | CAS | Our formula | PubChem |',
           '| --- | --- | --- | --- |',
           ...problems,
+          '',
+        ]
+      : []),
+    ...(unavailable.length > 0
+      ? [
+          tooManyUnavailable
+            ? 'PubChem was unavailable for too many lookups to call this a check. Re-run the workflow later:'
+            : 'Not checked this time because PubChem was unavailable (checked on earlier runs):',
+          '',
+          ...unavailable.map((n) => `- ${n}`),
           '',
         ]
       : []),
@@ -237,8 +327,9 @@ async function main(): Promise<void> {
   if (process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`)
   }
-  // A formula mismatch means our data or PubChem's mapping needs a human look.
-  if (problems.length > 0) process.exitCode = 1
+  // A formula mismatch means our data or PubChem's mapping needs a human
+  // look; too many unavailable lookups mean the check did not really run.
+  if (problems.length > 0 || tooManyUnavailable) process.exitCode = 1
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

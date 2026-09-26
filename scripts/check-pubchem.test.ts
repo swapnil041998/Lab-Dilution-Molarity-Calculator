@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkReagent, type PubChemCompound } from './check-pubchem.ts'
+import { checkReagent, lookup, type PubChemCompound } from './check-pubchem.ts'
 import { REAGENTS_BY_ID } from '../src/data/reagents/index.ts'
 
 function reagent(id: string) {
@@ -101,5 +101,83 @@ describe('checkReagent', () => {
     expect(checkReagent(reagent('sodium-chloride'), undefined)).toEqual({
       status: 'not-found',
     })
+  })
+})
+
+describe('lookup', () => {
+  const found = (formula: string) =>
+    new Response(
+      JSON.stringify({ PropertyTable: { Properties: [compound(formula, 5)] } }),
+      { status: 200 },
+    )
+  const busy = (retryAfter?: string) =>
+    new Response('Server busy', {
+      status: 503,
+      ...(retryAfter && { headers: { 'Retry-After': retryAfter } }),
+    })
+
+  /** A fetch that plays back responses (or throws errors) in order. */
+  function fakePubChem(replies: (Response | Error)[]) {
+    const calls: string[] = []
+    const waits: number[] = []
+    const fetch = (async (url: string | URL | Request) => {
+      calls.push(String(url))
+      const reply = replies[calls.length - 1]
+      if (!reply) throw new Error('no more replies')
+      if (reply instanceof Error) throw reply
+      return reply
+    }) as typeof globalThis.fetch
+    const wait = async (ms: number) => {
+      waits.push(ms)
+    }
+    return { calls, waits, options: { fetch, wait } }
+  }
+
+  it('waits and retries while PubChem is busy', async () => {
+    const pubchem = fakePubChem([busy(), busy('7'), found('NaCl')])
+    expect(await lookup('7647-14-5', pubchem.options)).toEqual({
+      status: 'found',
+      compounds: [compound('NaCl', 5)],
+    })
+    // its own back-off first, then the Retry-After PubChem asked for
+    expect(pubchem.waits).toEqual([2000, 7000])
+    expect(pubchem.calls[0]).toContain('/7647-14-5/property/')
+  })
+
+  it('reports PubChem as unavailable instead of failing the run', async () => {
+    const pubchem = fakePubChem(Array.from({ length: 5 }, () => busy()))
+    expect(await lookup('60-00-4', pubchem.options)).toEqual({
+      status: 'unavailable',
+      reason: 'HTTP 503',
+    })
+    expect(pubchem.calls).toHaveLength(5)
+    expect(pubchem.waits).toEqual([2000, 4000, 8000, 16000])
+  })
+
+  it('retries after a network error', async () => {
+    const pubchem = fakePubChem([new Error('socket hang up'), found('KCl')])
+    expect(await lookup('7447-40-7', pubchem.options)).toMatchObject({
+      status: 'found',
+    })
+    const down = fakePubChem(
+      Array.from({ length: 5 }, () => new Error('socket hang up')),
+    )
+    expect(await lookup('7447-40-7', down.options)).toEqual({
+      status: 'unavailable',
+      reason: 'network error (socket hang up)',
+    })
+  })
+
+  it('does not retry an unknown CAS number or a rejected request', async () => {
+    const unknown = fakePubChem([new Response('', { status: 404 })])
+    expect(await lookup('1-23-5', unknown.options)).toEqual({
+      status: 'not-found',
+    })
+    const rejected = fakePubChem([new Response('', { status: 400 })])
+    expect(await lookup('1-23-5', rejected.options)).toEqual({
+      status: 'unavailable',
+      reason: 'HTTP 400',
+    })
+    expect([...unknown.calls, ...rejected.calls]).toHaveLength(2)
   })
 })
