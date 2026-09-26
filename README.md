@@ -28,6 +28,14 @@ npm run format:check  # Prettier (npm run format to fix)
 npm run typecheck     # TypeScript
 ```
 
+The reagent library is also cross-checked against PubChem whenever it
+changes (`.github/workflows/verify-reagents.yml`). To run that check yourself
+(it needs internet access):
+
+```sh
+node scripts/check-pubchem.ts
+```
+
 ## Deployment
 
 Every push to `main` is built and deployed to GitHub Pages by
