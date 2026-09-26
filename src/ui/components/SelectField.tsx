@@ -1,8 +1,18 @@
+interface SelectOption<T extends string> {
+  readonly value: T
+  readonly label: string
+}
+
 interface SelectFieldProps<T extends string> {
   readonly id: string
   readonly label: string
   readonly value: T
-  readonly options: readonly { readonly value: T; readonly label: string }[]
+  readonly options: readonly SelectOption<T>[]
+  /** Shown as labelled groups instead of `options`, when given. */
+  readonly groups?: readonly {
+    readonly label: string
+    readonly options: readonly SelectOption<T>[]
+  }[]
   readonly onChange: (value: T) => void
   /** Shown under the field. */
   readonly hint?: string
@@ -14,9 +24,16 @@ export function SelectField<T extends string>({
   label,
   value,
   options,
+  groups,
   onChange,
   hint,
 }: SelectFieldProps<T>) {
+  const optionList = (list: readonly SelectOption<T>[]) =>
+    list.map((option) => (
+      <option key={option.value} value={option.value}>
+        {option.label}
+      </option>
+    ))
   const hintId = `${id}-hint`
   return (
     <div className="field">
@@ -28,11 +45,13 @@ export function SelectField<T extends string>({
         aria-describedby={hint ? hintId : undefined}
         onChange={(e) => onChange(e.target.value as T)}
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
+        {groups
+          ? groups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {optionList(group.options)}
+              </optgroup>
+            ))
+          : optionList(options)}
       </select>
       {hint && (
         <p id={hintId} className="field-hint">

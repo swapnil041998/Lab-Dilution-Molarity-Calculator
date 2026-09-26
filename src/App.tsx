@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BufferCalculator } from './ui/calculators/BufferCalculator.tsx'
 import { DilutionCalculator } from './ui/calculators/DilutionCalculator.tsx'
 import { LiquidCalculator } from './ui/calculators/LiquidCalculator.tsx'
+import { RecipeCalculator } from './ui/calculators/RecipeCalculator.tsx'
 import { SerialCalculator } from './ui/calculators/SerialCalculator.tsx'
 import { StandardsCalculator } from './ui/calculators/StandardsCalculator.tsx'
 import { SolidCalculator } from './ui/calculators/SolidCalculator.tsx'
@@ -165,6 +166,32 @@ const TABS: readonly Tab[] = [
           ]}
         />
         <BufferCalculator />
+      </>
+    ),
+  },
+  {
+    id: 'recipes',
+    label: 'Recipes',
+    content: (
+      <>
+        <h2>Recipes</h2>
+        <p className="section-intro">
+          Common buffers, media and standards, scaled to any volume and
+          strength, in whichever hydrate you have. Each recipe cites its source.
+        </p>
+        <LearnPanel
+          ideas={[
+            'Recipes list each ingredient at its working (1×) concentration. A 10× stock has ten times each amount, and is diluted 1 in 10 to use.',
+            'Swapping a hydrate keeps the same number of moles: 10 mM Na₂HPO₄ is 1.42 g/L anhydrous, or 2.68 g/L as the heptahydrate.',
+            'Dissolve in less water than the final volume, adjust the pH, then bring to volume: adjusting the pH adds liquid.',
+          ]}
+          mistakes={[
+            'Weighing a different hydrate from the one the recipe names, without correcting the mass.',
+            'Making stocks stronger than they can hold: 10× TBE and 10× PBS can precipitate, especially in the cold.',
+            'Autoclaving glucose, magnesium or calcium together with phosphate, which can caramelise or precipitate. Add them from separate sterile stocks.',
+          ]}
+        />
+        <RecipeCalculator />
       </>
     ),
   },

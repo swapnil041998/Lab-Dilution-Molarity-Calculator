@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
+import { REAGENTS } from '../data/reagents/index.ts'
 import {
+  hydrateForms,
   isValidCas,
   otherForms,
+  type Reagent,
   searchReagents,
   validateLibrary,
   validateReagent,
-  type Reagent,
+  withoutWater,
 } from './reagent.ts'
 
 const nacl: Reagent = {
@@ -241,5 +244,29 @@ describe('searchReagents', () => {
 
   it('respects the limit', () => {
     expect(searchReagents(library, 'chloride', 1)).toHaveLength(1)
+  })
+})
+
+describe('hydrate forms', () => {
+  it('strips water of crystallisation only', () => {
+    expect(withoutWater('Na2HPO4·7H2O')).toBe('Na2HPO4')
+    expect(withoutWater('CaSO4·½H2O')).toBe('CaSO4')
+    expect(withoutWater('C4H11NO3·HCl')).toBe('C4H11NO3·HCl')
+    expect(withoutWater('NaCl')).toBe('NaCl')
+  })
+
+  it('offers hydrates of the same compound, not other salts', () => {
+    const byId = new Map(REAGENTS.map((r) => [r.id, r]))
+    const ids = (id: string) =>
+      hydrateForms(byId.get(id)!, REAGENTS).map((r) => r.id)
+    expect(ids('sodium-phosphate-dibasic-anhydrous')).toEqual([
+      'sodium-phosphate-dibasic-anhydrous',
+      'sodium-phosphate-dibasic-dihydrate',
+      'sodium-phosphate-dibasic-heptahydrate',
+      'sodium-phosphate-dibasic-dodecahydrate',
+    ])
+    // Tris-HCl is the acid form, not a hydrate of Tris base
+    expect(ids('tris-base')).toEqual(['tris-base'])
+    expect(ids('sodium-chloride')).toEqual(['sodium-chloride'])
   })
 })

@@ -11,13 +11,14 @@ dilutions, calibration standards, recipes and buffers (v1.1). See
 
 ## What it does
 
-- **Six calculators:**
+- **Seven calculators:**
   - **From a solid:** how much to weigh.
   - **Dilution:** C1·V1 = C2·V2, for any concentration unit (M, mg/mL, ×, %, U/mL, cells/mL).
   - **Serial dilution:** 2-fold, 10-fold, half-log or any factor, with the same volume in every tube, and a table of each tube's dilution and concentration.
   - **Calibration standards:** a set of standards made directly from one stock, through an intermediate standard for the lowest ones when needed.
   - **Concentrated liquid:** for reagents such as 37% HCl.
   - **Buffer:** 17 buffer systems (Tris, phosphate, HEPES, citrate, acetate and more). It works out how much of each form to mix, or how much acid or base to add, correcting the pKa for temperature and ionic strength, and shows the pH at 4 °C and 37 °C.
+  - **Recipes:** 23 cited recipes (PBS, TBS, TAE, TBE, TE, EDTA, Tris-HCl, Laemmli, RIPA, LB, SOC, M9, MS medium, Hoagland, KHP COD standard and more), scaled to any volume and strength (1×, 10×, 50×), with stock solutions or weighed, and in whichever hydrate you have.
 - **A library of 232 reagents** across nine fields. Each has its formula weight, the
   forms it comes in (anhydrous or hydrates), CAS number, density and assay for
   liquids, pKa for buffers, hazard flags and practical notes. Any other compound

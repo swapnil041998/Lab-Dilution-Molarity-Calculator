@@ -189,6 +189,23 @@ test('makes a phosphate buffer and a Tris buffer', async ({ page }) => {
   await expectAccessible(page, '#panel-buffer')
 })
 
+test('scales a recipe and swaps a hydrate', async ({ page }) => {
+  await page.goto('/#recipes')
+  const recipes = panel(page, 'Recipes')
+  const result = recipes.getByRole('region', { name: 'Result' })
+  await expect(result).toContainText('For 1 L of 10× PBS')
+  await recipes
+    .getByRole('combobox', { name: 'Form of sodium phosphate dibasic' })
+    .selectOption('sodium-phosphate-dibasic-heptahydrate')
+  await expect(result).toContainText('26.81 g')
+
+  await recipes.getByRole('combobox', { name: 'Recipe' }).selectOption('tae')
+  await expect(result).toContainText('For 1 L of 50× TAE')
+  await expect(result).toContainText('242.3 g')
+  await expectFitsScreen(page)
+  await expectAccessible(page, '#panel-recipes')
+})
+
 test('remembers Learn mode across visits', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('radio', { name: 'Learn' }).check()
@@ -208,6 +225,7 @@ const TABS = [
   ['standards', 'Calibration standards'],
   ['liquid', 'Concentrated liquid'],
   ['buffer', 'Buffer'],
+  ['recipes', 'Recipes'],
 ] as const
 
 for (const [id, name] of TABS) {

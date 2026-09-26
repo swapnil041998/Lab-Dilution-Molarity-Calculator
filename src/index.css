@@ -524,7 +524,7 @@ select {
 
 .tab-list [role='tab'] {
   min-height: 44px;
-  padding: 8px 16px;
+  padding: 8px 12px;
   border: 0;
   border-bottom: 3px solid transparent;
   background: none;
@@ -794,4 +794,27 @@ select {
   .series-table td {
     padding: 6px 4px;
   }
+}
+
+/* Recipes */
+
+.form-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.form-choices legend {
+  padding: 0 4px;
+  font-weight: 600;
+}
+
+.recipe-source {
+  margin-top: 16px !important;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }

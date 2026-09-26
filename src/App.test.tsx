@@ -68,6 +68,12 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Make a buffer' })).toBeVisible()
   })
 
+  it('opens the recipes from a link', () => {
+    window.history.replaceState(null, '', '/#recipes')
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Recipes' })).toBeVisible()
+  })
+
   it('keeps what was typed when switching tabs', async () => {
     const user = userEvent.setup()
     render(<App />)

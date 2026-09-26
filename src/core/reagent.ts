@@ -215,6 +215,40 @@ export function otherForms(
   )
 }
 
+/**
+ * A formula without its water of crystallisation: "Na2HPO4·7H2O" gives
+ * "Na2HPO4". Other adducts stay: "C4H11NO3·HCl" (Tris-HCl) is unchanged,
+ * since it is a different compound from Tris base, not a hydrate of it.
+ */
+export function withoutWater(formula: string): string {
+  return formula
+    .split('·')
+    .filter((part) => !/^(\d+(\.\d+)?|½)?H2O$/.test(part.trim()))
+    .join('·')
+}
+
+/**
+ * The forms of a reagent that differ only in water of crystallisation,
+ * starting with the reagent itself: the forms a recipe can swap between by
+ * amount of substance without changing its chemistry.
+ */
+export function hydrateForms(
+  reagent: Reagent,
+  reagents: readonly Reagent[],
+): Reagent[] {
+  if (!reagent.formula) return [reagent]
+  const base = withoutWater(reagent.formula)
+  return [
+    reagent,
+    ...otherForms(reagent, reagents).filter(
+      (r) =>
+        r.formula !== undefined &&
+        r.molarMass !== undefined &&
+        withoutWater(r.formula) === base,
+    ),
+  ]
+}
+
 function normalizeText(s: string): string {
   return s
     .toLowerCase()
