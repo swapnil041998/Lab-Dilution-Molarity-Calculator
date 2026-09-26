@@ -54,6 +54,9 @@ describe('keepTogether', () => {
     expect(keepTogether('100 µL and 0.9 % w/v')).toBe(
       `100${nbsp}µL and 0.9${nbsp}% w/v`,
     )
+    expect(keepTogether('(1 in 10) or 1 in 10⁶')).toBe(
+      `(1${nbsp}in${nbsp}10) or 1${nbsp}in${nbsp}10⁶`,
+    )
   })
 
   it('leaves other spaces alone', () => {

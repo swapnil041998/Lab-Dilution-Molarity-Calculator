@@ -507,10 +507,10 @@ select {
 
 .tab-list {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
 }
 
 .tab-list [role='tab'] {
@@ -535,13 +535,32 @@ select {
 }
 
 @media (max-width: 600px) {
-  /* Share the width so every tab stays visible; long labels wrap. */
-  .tab-list [role='tab'] {
-    flex: 1 1 0;
+  /* Room for five choices, such as 2-fold to Other, on one line. */
+  .segmented-options label {
     padding: 6px 4px;
+  }
+
+  /* A grid of buttons, so every calculator stays visible on a phone. */
+  .tab-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-bottom: 0;
+  }
+
+  .tab-list [role='tab'] {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
     white-space: normal;
     line-height: 1.2;
     font-size: 0.95rem;
+  }
+
+  .tab-list [role='tab'][aria-selected='true'] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-contrast);
   }
 }
 
@@ -719,4 +738,36 @@ select {
 
 .two-step li {
   margin-bottom: 6px;
+}
+
+/* Serial dilution table */
+
+.series-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.series-table caption {
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.series-table th,
+.series-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.series-table thead th {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.series-table tbody th {
+  font-weight: 600;
 }

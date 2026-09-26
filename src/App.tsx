@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DilutionCalculator } from './ui/calculators/DilutionCalculator.tsx'
 import { LiquidCalculator } from './ui/calculators/LiquidCalculator.tsx'
+import { SerialCalculator } from './ui/calculators/SerialCalculator.tsx'
 import { SolidCalculator } from './ui/calculators/SolidCalculator.tsx'
 import { LearnPanel } from './ui/components/LearnPanel.tsx'
 import { ModeSwitch } from './ui/components/ModeSwitch.tsx'
@@ -56,6 +57,33 @@ const TABS: readonly Tab[] = [
           ]}
         />
         <DilutionCalculator />
+      </>
+    ),
+  },
+  {
+    id: 'serial',
+    label: 'Serial dilution',
+    content: (
+      <>
+        <h2>Make a serial dilution</h2>
+        <p className="section-intro">
+          A row of tubes, each diluted from the one before by the same factor:
+          two-fold, ten-fold, half-log or any other. Every tube ends with the
+          same volume.
+        </p>
+        <LearnPanel
+          ideas={[
+            'Each tube is diluted by the same factor from the one before, so the dilutions multiply: three 1 in 10 steps make 1 in 1000 (10⁻³).',
+            'To leave V in every tube with a step factor F, put V of diluent in each tube and move T = V ÷ (F − 1) along the row. For 1 in 10 with 900 µL per tube, T is 100 µL.',
+            'Half-log steps (a factor of √10, about 3.16) give two points for every tenfold change, a common spacing for dose–response curves.',
+          ]}
+          mistakes={[
+            'Not mixing each tube well before the next transfer, so the error carries down the whole series.',
+            'Using the same tip for every transfer, which carries extra material into the next tube.',
+            'Forgetting to remove one transfer volume from the last tube, so it holds more than the others.',
+          ]}
+        />
+        <SerialCalculator />
       </>
     ),
   },

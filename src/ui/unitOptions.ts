@@ -62,3 +62,24 @@ export const LIQUID_TARGET_UNITS = [
 export const DENSITY_UNITS = [
   { units: ['g/cm3', 'kg/m3'] },
 ] as const satisfies readonly UnitGroup[]
+
+/** Serial dilutions are made by volume, so w/w is left out. */
+export const SERIAL_CONCENTRATION_UNITS = [
+  { label: 'Molar', units: ['M', 'mM', 'uM', 'nM', 'pM'] },
+  {
+    label: 'Mass per volume',
+    units: [
+      '%w/v',
+      'g/L',
+      'mg/mL',
+      'mg/L',
+      'ug/mL',
+      'ng/uL',
+      'ng/mL',
+      'ppm',
+      'ppb',
+    ],
+  },
+  { label: 'Stocks and fractions', units: ['x', '%v/v'] },
+  { label: 'Activity and counts', units: ['U/mL', 'IU/mL', '/mL'] },
+] as const satisfies readonly UnitGroup[]

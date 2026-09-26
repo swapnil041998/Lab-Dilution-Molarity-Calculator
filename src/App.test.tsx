@@ -43,6 +43,17 @@ describe('App', () => {
     expect(window.location.hash).toBe('#dilution')
   })
 
+  it('opens the serial dilution calculator from a link', () => {
+    window.history.replaceState(null, '', '/#serial')
+    render(<App />)
+    expect(
+      screen.getByRole('tab', { name: 'Serial dilution' }),
+    ).toHaveAttribute('aria-selected', 'true')
+    expect(
+      screen.getByRole('heading', { name: 'Make a serial dilution' }),
+    ).toBeVisible()
+  })
+
   it('keeps what was typed when switching tabs', async () => {
     const user = userEvent.setup()
     render(<App />)

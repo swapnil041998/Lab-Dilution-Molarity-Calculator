@@ -2,7 +2,11 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 function panel(page: Page, name: string) {
-  return page.getByRole('tabpanel', { name })
+  return page.getByRole('tabpanel', { name, exact: true })
+}
+
+function tab(page: Page, name: string) {
+  return page.getByRole('tab', { name, exact: true })
 }
 
 /** Runs axe on part of the page and expects no violations at all. */
@@ -55,7 +59,7 @@ test('dilutes in two steps when the stock volume is too small', async ({
   page,
 }) => {
   await page.goto('/')
-  await page.getByRole('tab', { name: 'Dilution' }).click()
+  await tab(page, 'Dilution').click()
   const dilution = panel(page, 'Dilution')
   await dilution
     .getByRole('textbox', { name: 'Stock concentration (C1)' })
@@ -94,6 +98,24 @@ test('dilutes 37% HCl, adding acid to water', async ({ page }) => {
   await expectAccessible(page, '#panel-liquid')
 })
 
+test('plans a tenfold serial dilution', async ({ page }) => {
+  await page.goto('/')
+  await tab(page, 'Serial dilution').click()
+  const serial = panel(page, 'Serial dilution')
+  await serial.getByRole('textbox', { name: 'Number of tubes' }).fill('6')
+  await serial.getByRole('textbox', { name: 'Volume in each tube' }).fill('900')
+  await serial.getByRole('textbox', { name: 'Stock concentration' }).fill('10')
+
+  const result = serial.getByRole('region', { name: 'Result' })
+  await expect(result).toContainText(
+    'Transfer 100 µL into 900 µL of diluent in each tube',
+  )
+  const rows = result.getByRole('table', { name: 'Tubes' }).getByRole('row')
+  await expect(rows).toHaveCount(7)
+  await expect(rows.last()).toContainText('10 nM')
+  await expectAccessible(page, '#panel-serial')
+})
+
 test('remembers Learn mode across visits', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('radio', { name: 'Learn' }).check()
@@ -109,6 +131,7 @@ test('remembers Learn mode across visits', async ({ page }) => {
 for (const [id, name] of [
   ['solid', 'From a solid'],
   ['dilution', 'Dilution'],
+  ['serial', 'Serial dilution'],
   ['liquid', 'Concentrated liquid'],
 ] as const) {
   test(`${name} fits the screen and passes an accessibility scan`, async ({
@@ -147,7 +170,7 @@ test.describe('dark mode', () => {
     )
     await expectAccessible(page, 'body')
 
-    await page.getByRole('tab', { name: 'Concentrated liquid' }).click()
+    await tab(page, 'Concentrated liquid').click()
     const liquid = panel(page, 'Concentrated liquid')
     await liquid.getByRole('combobox', { name: 'Reagent' }).fill('sulfuric')
     await page.getByRole('option', { name: /Sulfuric acid 98%/ }).click()
