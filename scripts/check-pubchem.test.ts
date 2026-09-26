@@ -38,6 +38,44 @@ describe('checkReagent', () => {
     ).toEqual({ status: 'match', cid: 5234 })
   })
 
+  it('accepts a formula PubChem writes as a whole multiple of ours', () => {
+    // CAS 10034-76-1 is drawn as 2CaSO4·H2O
+    expect(
+      checkReagent(reagent('calcium-sulfate-hemihydrate'), [
+        compound('Ca2H2O9S2', 3033839),
+      ]),
+    ).toEqual({ status: 'match', cid: 3033839, multiple: 2 })
+  })
+
+  it('does not accept a formula that is not an exact multiple', () => {
+    expect(
+      checkReagent(reagent('calcium-sulfate-hemihydrate'), [
+        compound('Ca2H4O10S2'),
+      ]),
+    ).toMatchObject({ status: 'mismatch' })
+  })
+
+  it('reports a checked PubChem quirk with its reason instead of failing', () => {
+    const outcome = checkReagent(reagent('monosodium-glutamate-monohydrate'), [
+      compound('C5H11NNaO5', 87090819),
+    ])
+    expect(outcome.status).toBe('resolved')
+    expect(outcome.status === 'resolved' && outcome.note).toMatch(
+      /known difference: .*187\.13/,
+    )
+  })
+
+  it('shows what a formula-less CAS number resolves to', () => {
+    // PubChem maps the tryptone CAS number to acrylamide; a person should see it
+    expect(
+      checkReagent(reagent('tryptone'), [compound('C3H5NO', 6579)]),
+    ).toEqual({
+      status: 'resolved',
+      cid: 6579,
+      note: 'no formula to compare; PubChem has C3H5NO',
+    })
+  })
+
   it('reports a different hydrate or compound as a mismatch', () => {
     const outcome = checkReagent(reagent('magnesium-chloride-hexahydrate'), [
       compound('Cl2Mg', 24584),

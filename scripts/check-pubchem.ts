@@ -28,7 +28,12 @@ export interface PubChemCompound {
 }
 
 export type Outcome =
-  | { readonly status: 'match'; readonly cid: number }
+  | {
+      readonly status: 'match'
+      readonly cid: number
+      /** PubChem writes the formula this many times ours, e.g. 2CaSO4·H2O. */
+      readonly multiple?: number
+    }
   | { readonly status: 'resolved'; readonly cid: number; readonly note: string }
   | {
       readonly status: 'mismatch'
@@ -38,10 +43,49 @@ export type Outcome =
   | { readonly status: 'not-found' }
   | { readonly status: 'skipped'; readonly reason: string }
 
-/** Hill formula for comparison; PubChem formulas parse with our parser too. */
+/**
+ * Reagents whose PubChem formula differs from the supplier's for a reason
+ * checked by hand. Each entry must say why our formula is the right one.
+ */
+export const KNOWN_DIFFERENCES: Readonly<Record<string, string>> = {
+  'monosodium-glutamate-monohydrate':
+    'PubChem draws CAS 6106-04-3 as Na+ beside un-ionised glutamic acid and water ' +
+    '(C5H11NNaO5, charge +1); the neutral salt C5H8NNaO4·H2O, 187.13 g/mol, matches supplier data.',
+}
+
+/** Hill formula for display; PubChem formulas parse with our parser too. */
 function hill(formula: string): string {
   const parsed = parseFormula(formula)
   return parsed.ok ? parsed.value.hillFormula : formula
+}
+
+function elementCounts(formula: string): Map<string, number> | undefined {
+  const parsed = parseFormula(formula)
+  if (!parsed.ok) return undefined
+  return new Map(parsed.value.composition.map((e) => [e.symbol, e.count]))
+}
+
+/**
+ * How many times our formula PubChem's formula is, when it is a small whole
+ * multiple (2CaSO4·H2O for CaSO4·0.5H2O) or the same (1); otherwise undefined.
+ */
+function formulaMultiple(ours: string, theirs: string): number | undefined {
+  const a = elementCounts(ours)
+  const b = elementCounts(theirs)
+  if (!a || !b || a.size !== b.size) return undefined
+  let ratio: number | undefined
+  for (const [symbol, count] of a) {
+    const other = b.get(symbol)
+    if (other === undefined) return undefined
+    const r = other / count
+    if (ratio === undefined) ratio = r
+    else if (Math.abs(r - ratio) > 1e-9) return undefined
+  }
+  if (ratio === undefined) return undefined
+  const whole = Math.round(ratio)
+  return whole >= 1 && whole <= 4 && Math.abs(ratio - whole) < 1e-9
+    ? whole
+    : undefined
 }
 
 /** Compares one reagent with what PubChem returned for its CAS number. */
@@ -54,7 +98,13 @@ export function checkReagent(
   const first = compounds[0]!
 
   if (!reagent.formula) {
-    return { status: 'resolved', cid: first.CID, note: 'no formula to compare' }
+    // Nothing to compare, but show what the CAS number points to so a person
+    // can spot a CAS number that belongs to something else.
+    return {
+      status: 'resolved',
+      cid: first.CID,
+      note: `no formula to compare; PubChem has ${first.MolecularFormula}`,
+    }
   }
   if (reagent.assayBasis) {
     return {
@@ -64,12 +114,22 @@ export function checkReagent(
     }
   }
 
-  const ours = hill(reagent.formula)
-  const match = compounds.find((c) => hill(c.MolecularFormula) === ours)
-  if (match) return { status: 'match', cid: match.CID }
+  for (const c of compounds) {
+    const multiple = formulaMultiple(reagent.formula, c.MolecularFormula)
+    if (multiple === 1) return { status: 'match', cid: c.CID }
+    if (multiple !== undefined) return { status: 'match', cid: c.CID, multiple }
+  }
+  const known = KNOWN_DIFFERENCES[reagent.id]
+  if (known) {
+    return {
+      status: 'resolved',
+      cid: first.CID,
+      note: `known difference: ${known}`,
+    }
+  }
   return {
     status: 'mismatch',
-    ours,
+    ours: hill(reagent.formula),
     theirs: compounds.map((c) => `${c.MolecularFormula} (CID ${c.CID})`),
   }
 }
@@ -102,6 +162,7 @@ async function lookup(cas: string): Promise<PubChemCompound[] | undefined> {
 async function main(): Promise<void> {
   const problems: string[] = []
   const notFound: string[] = []
+  const resolved: string[] = []
   let matched = 0
 
   for (const reagent of REAGENTS) {
@@ -111,11 +172,17 @@ async function main(): Promise<void> {
     switch (outcome.status) {
       case 'match':
         matched++
-        console.log(`ok        ${label} → CID ${outcome.cid}`)
+        console.log(
+          `ok        ${label} → CID ${outcome.cid}` +
+            (outcome.multiple
+              ? ` (PubChem writes ${outcome.multiple} × our formula)`
+              : ''),
+        )
         break
       case 'resolved':
         matched++
         console.log(`resolved  ${label} → CID ${outcome.cid}: ${outcome.note}`)
+        resolved.push(`${label} → CID ${outcome.cid}: ${outcome.note}`)
         break
       case 'mismatch':
         console.log(
@@ -155,6 +222,14 @@ async function main(): Promise<void> {
           'Not found on PubChem (check by hand):',
           '',
           ...notFound.map((n) => `- ${n}`),
+          '',
+        ]
+      : []),
+    ...(resolved.length > 0
+      ? [
+          'Not compared by formula (check each CAS points to the right substance):',
+          '',
+          ...resolved.map((n) => `- ${n}`),
         ]
       : []),
   ].join('\n')
