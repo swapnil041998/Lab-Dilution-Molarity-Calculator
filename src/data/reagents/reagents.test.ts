@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { REAGENTS, REAGENTS_BY_ID } from './index.ts'
-import { validateLibrary } from '../../core/reagent.ts'
+import { FIELDS, validateLibrary } from '../../core/reagent.ts'
 import { ELEMENTS } from '../../core/elements.ts'
 
 describe('built-in reagent library', () => {
@@ -10,6 +10,21 @@ describe('built-in reagent library', () => {
 
   it('indexes every reagent by id', () => {
     expect(REAGENTS_BY_ID.size).toBe(REAGENTS.length)
+  })
+
+  it('covers every field with a useful number of reagents', () => {
+    for (const field of FIELDS) {
+      const count = REAGENTS.filter((r) => r.fields.includes(field)).length
+      expect(count, field).toBeGreaterThanOrEqual(20)
+    }
+  })
+
+  it('gives every liquid and commercial solution a density', () => {
+    for (const r of REAGENTS) {
+      if (r.state === 'liquid' || r.state === 'solution') {
+        expect(r.density, r.id).toBeGreaterThan(0)
+      }
+    }
   })
 })
 

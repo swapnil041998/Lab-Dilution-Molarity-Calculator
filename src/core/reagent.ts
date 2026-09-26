@@ -64,8 +64,15 @@ export interface Reagent {
   readonly notes?: readonly string[]
 }
 
-/** Allowed difference between the stated and the formula molar mass (g/mol). */
-export const MOLAR_MASS_TOLERANCE = 0.05
+/**
+ * Allowed difference between the stated and the formula molar mass: 0.05
+ * g/mol, or 0.005% for large molecules, whose supplier weights often predate
+ * the current atomic weights. Both stay well below one hydrogen atom
+ * (1.008 g/mol), so a wrong formula is still caught.
+ */
+export function molarMassTolerance(molarMass: number): number {
+  return Math.max(0.05, molarMass * 5e-5)
+}
 
 const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const CAS_RE = /^(\d{2,7})-(\d{2})-(\d)$/
@@ -106,7 +113,7 @@ export function validateReagent(r: Reagent): string[] {
       problem('a formula needs the stated molar mass to check it against')
     } else {
       const diff = Math.abs(parsed.value.molarMass - r.molarMass)
-      if (diff > MOLAR_MASS_TOLERANCE) {
+      if (diff > molarMassTolerance(r.molarMass)) {
         problem(
           `stated molar mass ${r.molarMass} differs from ${r.formula} ` +
             `(${parsed.value.molarMass.toFixed(3)}) by ${diff.toFixed(3)} g/mol`,

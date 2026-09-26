@@ -57,6 +57,19 @@ describe('validateReagent', () => {
     expect(problems({ molarMass: 58.44 + 0.04 })).toEqual([])
   })
 
+  it('allows older atomic weights in large formula weights, but not a missing atom', () => {
+    // (NH4)6Mo7O24·4H2O: supplier 1235.86 (Mo 95.94), current weights 1235.92
+    const molybdate = {
+      formula: '(NH4)6Mo7O24·4H2O',
+      molarMass: 1235.86,
+      cas: '12054-85-2',
+    }
+    expect(problems(molybdate)).toEqual([])
+    expect(problems({ ...molybdate, molarMass: 1235.86 - 1.008 })[0]).toMatch(
+      /differs/,
+    )
+  })
+
   it('needs a molar mass with a formula, and a note without one', () => {
     expect(problems({ molarMass: undefined })[0]).toMatch(/needs the stated/)
     expect(problems({ formula: undefined })[0]).toMatch(/molarMassNote/)
