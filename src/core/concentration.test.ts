@@ -105,6 +105,54 @@ describe('convertConcentration: density bridges', () => {
   })
 })
 
+describe('convertConcentration: normality', () => {
+  it('1 M H₂SO₄ is 2 N, without a molar mass', () => {
+    const result = convertConcentration(
+      quantity(1, 'M'),
+      'equivalentConcentration',
+      { equivalents: 2 },
+    )
+    expect(result.ok && toUnit(result.value, 'N')).toBe(2)
+  })
+
+  it('0.02 N H₂SO₄ is 10 mM', () => {
+    const result = convertConcentration(
+      quantity(0.02, 'N'),
+      'molarConcentration',
+      { equivalents: 2 },
+    )
+    expect(result.ok && toUnit(result.value, 'mM')).toBeCloseTo(10, 12)
+  })
+
+  it('40 mg/L Ca²⁺ is 1.996 meq/L', () => {
+    const result = convertConcentration(
+      quantity(40, 'mg/L'),
+      'equivalentConcentration',
+      { equivalents: 2, molarMass: quantity(40.078, 'g/mol') },
+    )
+    expect(result.ok && toUnit(result.value, 'meq/L')).toBeCloseTo(1.9961, 4)
+  })
+
+  it('2 meq/L Mg²⁺ is 24.31 mg/L', () => {
+    const result = convertConcentration(
+      quantity(2, 'meq/L'),
+      'massConcentration',
+      { equivalents: 2, molarMass: quantity(24.305, 'g/mol') },
+    )
+    expect(result.ok && toUnit(result.value, 'mg/L')).toBeCloseTo(24.305, 10)
+  })
+
+  it('asks for n before the molar mass', () => {
+    const result = convertConcentration(quantity(1, 'N'), 'massConcentration')
+    expect(!result.ok && result.error.code).toBe('missing-equivalents')
+    expect(!result.ok && result.error.field).toBe('equivalents')
+    const noMass = convertConcentration(quantity(1, 'N'), 'massConcentration', {
+      equivalents: 1,
+    })
+    expect(!noMass.ok && noMass.error.code).toBe('missing-molar-mass')
+  })
+})
+
 describe('concentration kinds', () => {
   it('knows which kinds are concentrations', () => {
     expect(isConcentrationKind('molarConcentration')).toBe(true)

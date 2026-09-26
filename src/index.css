@@ -524,7 +524,8 @@ select {
 
 .tab-list [role='tab'] {
   min-height: 44px;
-  padding: 8px 12px;
+  /* Narrow enough for all eight calculators on one row at 1280 px. */
+  padding: 8px;
   border: 0;
   border-bottom: 3px solid transparent;
   background: none;
@@ -796,12 +797,26 @@ select {
   }
 }
 
+/* Converter */
+
+.series-table .table-group th {
+  padding-top: 12px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.series-table tbody:first-of-type .table-group th {
+  padding-top: 6px;
+}
+
 /* Recipes */
 
 .form-choices {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* A fieldset is otherwise at least as wide as its widest field. */
+  min-width: 0;
   margin: 0;
   padding: 12px;
   border: 1px solid var(--border);

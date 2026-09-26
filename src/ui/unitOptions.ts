@@ -104,3 +104,35 @@ export const STANDARD_CONCENTRATION_UNITS = [
   },
   { label: 'Activity and counts', units: ['U/mL', 'IU/mL', '/mL'] },
 ] as const satisfies readonly UnitGroup[]
+
+/** Every concentration unit the converter reads and writes. */
+export const CONVERT_UNITS = [
+  { label: 'Molar', units: ['M', 'mM', 'uM', 'nM'] },
+  { label: 'Normality', units: ['N', 'meq/L', 'ueq/L'] },
+  {
+    label: 'Mass per volume',
+    units: [
+      '%w/v',
+      'g/L',
+      'mg/mL',
+      'mg/L',
+      'ug/mL',
+      'ug/L',
+      'ng/mL',
+      'ppm',
+      'ppb',
+    ],
+  },
+  { label: 'Mass per mass', units: ['%w/w', 'g/kg', 'mg/kg', 'ug/kg'] },
+  { label: 'Volume per volume', units: ['%v/v', 'mL/L', 'uL/L'] },
+] as const satisfies readonly UnitGroup[]
+
+/** Expressed-as conversions keep the moles or the mass of the substance. */
+export const EXPRESSED_AS_UNITS = [
+  { label: 'Molar', units: ['M', 'mM', 'uM'] },
+  {
+    label: 'Mass per volume',
+    units: ['mg/L', 'ug/L', 'g/L', 'ppm', 'ppb', 'mg/mL', 'ug/mL', '%w/v'],
+  },
+  { label: 'Mass per mass', units: ['%w/w', 'g/kg', 'mg/kg', 'ug/kg'] },
+] as const satisfies readonly UnitGroup[]

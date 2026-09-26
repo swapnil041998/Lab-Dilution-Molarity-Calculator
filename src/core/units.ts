@@ -13,6 +13,7 @@ export type Kind =
   | 'mass'
   | 'volume'
   | 'molarConcentration'
+  | 'equivalentConcentration'
   | 'massConcentration'
   | 'massFraction'
   | 'volumeFraction'
@@ -35,6 +36,7 @@ export const KINDS: Readonly<Record<Kind, KindInfo>> = {
   mass: { label: 'mass', base: 'g' },
   volume: { label: 'volume', base: 'L' },
   molarConcentration: { label: 'molar concentration', base: 'mol/L' },
+  equivalentConcentration: { label: 'normality', base: 'eq/L' },
   massConcentration: { label: 'mass concentration', base: 'g/L' },
   massFraction: { label: 'mass fraction (w/w)', base: 'g/g' },
   volumeFraction: { label: 'volume fraction (v/v)', base: 'L/L' },
@@ -125,6 +127,26 @@ export const UNITS = {
     symbol: 'fM',
     exp10: -15,
     aliases: ['fmol/L', 'femtomolar'],
+  },
+
+  // Normality: equivalents per litre (base: eq/L)
+  N: {
+    kind: 'equivalentConcentration',
+    symbol: 'N',
+    exp10: 0,
+    aliases: ['eq/L', 'normal'],
+  },
+  'meq/L': {
+    kind: 'equivalentConcentration',
+    symbol: 'meq/L',
+    exp10: -3,
+    aliases: ['mN', 'mmolc/L'],
+  },
+  'ueq/L': {
+    kind: 'equivalentConcentration',
+    symbol: 'µeq/L',
+    exp10: -6,
+    aliases: ['uN'],
   },
 
   // Mass concentration (base: g/L)

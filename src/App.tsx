@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BufferCalculator } from './ui/calculators/BufferCalculator.tsx'
+import { ConvertCalculator } from './ui/calculators/ConvertCalculator.tsx'
 import { DilutionCalculator } from './ui/calculators/DilutionCalculator.tsx'
 import { LiquidCalculator } from './ui/calculators/LiquidCalculator.tsx'
 import { RecipeCalculator } from './ui/calculators/RecipeCalculator.tsx'
@@ -192,6 +193,33 @@ const TABS: readonly Tab[] = [
           ]}
         />
         <RecipeCalculator />
+      </>
+    ),
+  },
+  {
+    id: 'convert',
+    label: 'Convert',
+    content: (
+      <>
+        <h2>Convert concentrations</h2>
+        <p className="section-intro">
+          Between molar, normal, mass and percent units, and between the forms
+          results are expressed as: nitrate as N, hardness as CaCO₃, P₂O₅ as P,
+          bleach as available chlorine.
+        </p>
+        <LearnPanel
+          ideas={[
+            'A conversion changes how a solution is described, never the solution. Within one kind (mg/L to µg/L) it is a power of ten; between kinds it needs a bridge: the molar mass (M and g/L), n (M and N), or a density (% w/w and % v/v).',
+            'Normality counts reacting units: N = M × n, where n is the charge of an ion or the H⁺ or OH⁻ one molecule gives. 1 M H₂SO₄ is 2 N, and 40 mg/L of Ca²⁺ is 2 meq/L.',
+            '"As N" or "as CaCO₃" reports a substance by what it has in common with another. 50 mg/L of nitrate contains 11.3 mg/L of nitrogen, so it is 11.3 mg/L as N.',
+          ]}
+          mistakes={[
+            'Comparing a result as N with a limit as nitrate: they differ by a factor of 4.4.',
+            'Treating ppm as mg/L for solids or dense solutions: ppm by weight (mg/kg) equals mg/L only when the density is close to 1 g/mL.',
+            'Mixing up % w/v, % w/w and % v/v: 70% v/v ethanol is about 62% w/w.',
+          ]}
+        />
+        <ConvertCalculator />
       </>
     ),
   },

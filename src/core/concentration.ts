@@ -6,6 +6,9 @@
  * - molar:        g/L = mol/L × molar mass
  * - w/w:          g/L = mass fraction × density of the solution
  * - v/v:          g/L = volume fraction × density of the pure solute
+ *
+ * Normality converts to molarity directly: mol/L = eq/L ÷ n, where n is the
+ * equivalents per mole.
  */
 
 import { KINDS, type Kind, type Quantity } from './units.ts'
@@ -13,6 +16,7 @@ import { fail, ok, type CalcResult } from './result.ts'
 
 export type ConcentrationKind =
   | 'molarConcentration'
+  | 'equivalentConcentration'
   | 'massConcentration'
   | 'massFraction'
   | 'volumeFraction'
@@ -23,6 +27,7 @@ export type ConcentrationKind =
 
 const CONCENTRATION_KINDS: ReadonlySet<Kind> = new Set<ConcentrationKind>([
   'molarConcentration',
+  'equivalentConcentration',
   'massConcentration',
   'massFraction',
   'volumeFraction',
@@ -50,12 +55,19 @@ export interface ConcentrationBridges {
   readonly solutionDensity?: Quantity<'density'>
   /** Density of the pure solute (a neat liquid), for v/v. */
   readonly soluteDensity?: Quantity<'density'>
+  /**
+   * Equivalents per mole (n), for normality: the charge of an ion, or the
+   * H⁺ or OH⁻ one mole of an acid or base provides.
+   */
+  readonly equivalents?: number
 }
 
 type Bridge = keyof ConcentrationBridges
 
 /** Kinds that convert to g/L by multiplying by a bridge value. */
-const BRIDGES: Partial<Record<ConcentrationKind, Bridge>> = {
+const BRIDGES: Partial<
+  Record<ConcentrationKind, Exclude<Bridge, 'equivalents'>>
+> = {
   molarConcentration: 'molarMass',
   massFraction: 'solutionDensity',
   volumeFraction: 'soluteDensity',
@@ -71,6 +83,10 @@ const BRIDGE_LABELS: Record<Bridge, { code: string; label: string }> = {
     code: 'missing-solute-density',
     label: 'the density of the pure liquid',
   },
+  equivalents: {
+    code: 'missing-equivalents',
+    label: 'the equivalents per mole (n)',
+  },
 }
 
 /** Grams per litre per unit of `kind`, or the bridge that is missing. */
@@ -79,6 +95,12 @@ function gramsPerLitre(
   bridges: ConcentrationBridges,
 ): number | Bridge | undefined {
   if (kind === 'massConcentration') return 1
+  if (kind === 'equivalentConcentration') {
+    // One equivalent is 1/n mole.
+    if (bridges.equivalents === undefined) return 'equivalents'
+    const perMole = gramsPerLitre('molarConcentration', bridges)
+    return typeof perMole === 'number' ? perMole / bridges.equivalents : perMole
+  }
   const bridge = BRIDGES[kind]
   if (bridge === undefined) return undefined
   return bridges[bridge]?.value ?? bridge
@@ -92,6 +114,14 @@ export function convertConcentration(
 ): CalcResult<Quantity<ConcentrationKind>> {
   if (q.kind === to) return ok(q)
 
+  // Molarity and normality differ only by n; no molar mass needed.
+  if (isPerMole(q.kind) && isPerMole(to)) {
+    const n = bridges.equivalents
+    if (n === undefined) return missingBridge(q.kind, to, 'equivalents')
+    const value = to === 'equivalentConcentration' ? q.value * n : q.value / n
+    return ok({ kind: to, value })
+  }
+
   const from = gramsPerLitre(q.kind, bridges)
   const into = gramsPerLitre(to, bridges)
   if (from === undefined || into === undefined) {
@@ -103,6 +133,10 @@ export function convertConcentration(
   if (typeof from === 'string') return missingBridge(q.kind, to, from)
   if (typeof into === 'string') return missingBridge(q.kind, to, into)
   return ok({ kind: to, value: (q.value * from) / into })
+}
+
+function isPerMole(kind: ConcentrationKind): boolean {
+  return kind === 'molarConcentration' || kind === 'equivalentConcentration'
 }
 
 function missingBridge(

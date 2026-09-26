@@ -11,7 +11,7 @@ import {
 } from '../explain/work.ts'
 
 interface WorkingsProps {
-  /** Numbered bench steps. */
+  /** Numbered bench steps; none for a conversion with nothing to make. */
   readonly steps: readonly string[]
   /** The calculation, for "Show working". */
   readonly working: readonly WorkLine[]
@@ -28,8 +28,9 @@ export function Workings({ steps, working, summary }: WorkingsProps) {
     const text = [
       summary,
       '',
-      ...steps.map((s, i) => `${i + 1}. ${s}`),
-      '',
+      ...(steps.length > 0
+        ? [...steps.map((s, i) => `${i + 1}. ${s}`), '']
+        : []),
       'Working:',
       ...working.map(lineText),
     ].join('\n')
@@ -44,12 +45,16 @@ export function Workings({ steps, working, summary }: WorkingsProps) {
 
   return (
     <div className="workings">
-      <h3>Steps</h3>
-      <ol className="procedure" aria-label="Steps">
-        {steps.map((step) => (
-          <li key={step}>{keepTogether(step)}</li>
-        ))}
-      </ol>
+      {steps.length > 0 && (
+        <>
+          <h3>Steps</h3>
+          <ol className="procedure" aria-label="Steps">
+            {steps.map((step) => (
+              <li key={step}>{keepTogether(step)}</li>
+            ))}
+          </ol>
+        </>
+      )}
       <details className="show-working" open={learn}>
         <summary>Show working</summary>
         <div className="working-lines">
@@ -71,7 +76,11 @@ export function Workings({ steps, working, summary }: WorkingsProps) {
         </div>
       </details>
       <button type="button" className="copy-button" onClick={copy}>
-        {copied ? 'Copied' : 'Copy steps and working'}
+        {copied
+          ? 'Copied'
+          : steps.length > 0
+            ? 'Copy steps and working'
+            : 'Copy working'}
       </button>
     </div>
   )

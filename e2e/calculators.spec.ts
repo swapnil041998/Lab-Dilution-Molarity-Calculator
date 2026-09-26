@@ -206,6 +206,29 @@ test('scales a recipe and swaps a hydrate', async ({ page }) => {
   await expectAccessible(page, '#panel-recipes')
 })
 
+test('converts units and makes a lead standard from its salt', async ({
+  page,
+}) => {
+  await page.goto('/#convert')
+  const convert = panel(page, 'Convert')
+  const result = convert.getByRole('region', { name: 'Result' })
+  await convert.getByRole('textbox', { name: 'Concentration' }).fill('10')
+  await convert.getByRole('combobox', { name: 'Reagent' }).fill('NaCl')
+  await page.getByRole('option', { name: /^Sodium chloride/ }).click()
+  await expect(result).toContainText(/10\smg\/mL = 171\.1\smM/)
+  await expectAccessible(page, '#panel-convert')
+
+  await convert.getByRole('radio', { name: 'Expressed as' }).check()
+  await convert
+    .getByRole('combobox', { name: 'Conversion' })
+    .selectOption('lead-nitrate')
+  await convert.getByRole('textbox', { name: 'Concentration' }).fill('1000')
+  await convert.getByRole('textbox', { name: 'Volume to make' }).fill('1')
+  await expect(result).toContainText(/weigh 1\.598\sg of lead\(II\) nitrate/)
+  await expectFitsScreen(page)
+  await expectAccessible(page, '#panel-convert')
+})
+
 test('remembers Learn mode across visits', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('radio', { name: 'Learn' }).check()
@@ -226,6 +249,7 @@ const TABS = [
   ['liquid', 'Concentrated liquid'],
   ['buffer', 'Buffer'],
   ['recipes', 'Recipes'],
+  ['convert', 'Convert'],
 ] as const
 
 for (const [id, name] of TABS) {

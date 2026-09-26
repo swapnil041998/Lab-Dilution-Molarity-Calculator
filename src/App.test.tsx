@@ -74,6 +74,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Recipes' })).toBeVisible()
   })
 
+  it('opens the converter from a link', () => {
+    window.history.replaceState(null, '', '/#convert')
+    render(<App />)
+    expect(
+      screen.getByRole('heading', { name: 'Convert concentrations' }),
+    ).toBeVisible()
+  })
+
   it('keeps what was typed when switching tabs', async () => {
     const user = userEvent.setup()
     render(<App />)

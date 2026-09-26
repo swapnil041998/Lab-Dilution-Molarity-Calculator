@@ -92,6 +92,7 @@ const LADDERS: Partial<Record<Kind, readonly (readonly UnitId[])[]>> = {
   mass: [['kg', 'g', 'mg', 'ug', 'ng', 'pg']],
   volume: [unitsOfKind('volume')],
   molarConcentration: [unitsOfKind('molarConcentration')],
+  equivalentConcentration: [unitsOfKind('equivalentConcentration')],
   massConcentration: [
     ['mg/mL', 'ug/mL', 'ng/mL', 'pg/mL'],
     ['g/L', 'mg/L', 'ug/L', 'ng/L'],
