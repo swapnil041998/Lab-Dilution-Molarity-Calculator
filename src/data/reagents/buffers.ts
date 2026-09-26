@@ -384,7 +384,9 @@ export const BUFFERS = [
     ],
     state: 'solid',
     pKa: PHOSPHATE_PKA,
-    notes: ['Dried KH2PO4 is the usual standard for phosphate analysis.'],
+    notes: [
+      'Phosphate standard: 439.4 mg/L KH2PO4 = 100 mg/L PO4-P (dry at 105 °C).',
+    ],
   },
   {
     id: 'potassium-phosphate-dibasic-anhydrous',
