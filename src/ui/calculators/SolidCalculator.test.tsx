@@ -1,0 +1,170 @@
+// @vitest-environment jsdom
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+import { SolidCalculator } from './SolidCalculator.tsx'
+
+function setup() {
+  const user = userEvent.setup()
+  render(<SolidCalculator />)
+  const result = () => screen.getByRole('region', { name: 'Result' })
+  const textbox = (name: string) => screen.getByRole('textbox', { name })
+  const pickReagent = async (query: string, option: RegExp) => {
+    const search = screen.getByRole('combobox', { name: 'Reagent' })
+    await user.clear(search)
+    await user.type(search, query)
+    await user.click(screen.getByRole('option', { name: option }))
+  }
+  return { user, result, textbox, pickReagent }
+}
+
+describe('SolidCalculator', () => {
+  it('500 mL of 1 M NaCl: weigh 29.22 g', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    expect(textbox('Molar mass (FW)')).toHaveValue('58.44')
+
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '500')
+
+    expect(result()).toHaveTextContent('Weigh 29.22 g')
+    expect(result()).toHaveTextContent(
+      '29.22 g of sodium chloride in 500 mL gives 1 M.',
+    )
+    expect(result()).toHaveTextContent('That is 500 mmol.')
+  })
+
+  it('solves for the final volume', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.click(screen.getByRole('radio', { name: 'Final volume' }))
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Mass weighed'), '29.22')
+    expect(result()).toHaveTextContent('Final volume 500 mL')
+  })
+
+  it('solves for concentration and gives it both ways', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.click(screen.getByRole('radio', { name: 'Concentration' }))
+    await user.type(textbox('Mass weighed'), '29.22')
+    await user.type(textbox('Final volume'), '500')
+    expect(result()).toHaveTextContent('Concentration 1 M')
+    expect(result()).toHaveTextContent('Also 58.44 mg/mL.')
+  })
+
+  it('respects the units chosen', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.type(textbox('Concentration'), '100')
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Concentration unit' }),
+      'uM',
+    )
+    await user.type(textbox('Final volume'), '10')
+    // 100 µM × 10 mL × 58.44 g/mol = 58.44 µg
+    expect(result()).toHaveTextContent('Weigh 58.44 µg')
+  })
+
+  it('corrects for purity', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '500')
+    await user.clear(textbox('Purity (%)'))
+    await user.type(textbox('Purity (%)'), '99')
+    expect(result()).toHaveTextContent('Weigh 29.52 g')
+    expect(result()).toHaveTextContent('contains 29.22 g of the pure compound')
+  })
+
+  it('switches to another form of the same compound', async () => {
+    const { user, textbox, pickReagent } = setup()
+    await pickReagent('magnesium chloride', /anhydrous/)
+    expect(textbox('Molar mass (FW)')).toHaveValue('95.21')
+
+    const card = screen.getByRole('region', { name: 'Chosen reagent' })
+    await user.click(within(card).getByRole('button', { name: /hexahydrate/ }))
+    expect(textbox('Molar mass (FW)')).toHaveValue('203.3')
+    expect(screen.getByRole('combobox', { name: 'Reagent' })).toHaveValue(
+      'Magnesium chloride hexahydrate',
+    )
+  })
+
+  it('accepts any formula typed into the search', async () => {
+    const { textbox, pickReagent } = setup()
+    // user-event types a literal '[' as '[['
+    await pickReagent('K4[[Fe(CN)6].3H2O', /^Use formula/)
+    expect(
+      Number(textbox('Molar mass (FW)').getAttribute('value')),
+    ).toBeCloseTo(422.39, 2)
+    expect(
+      screen.getByRole('region', { name: 'Chosen formula' }),
+    ).toHaveTextContent('K₄[Fe(CN)₆]·3H₂O')
+  })
+
+  it('picks a reagent with the keyboard', async () => {
+    const { user } = setup()
+    const search = screen.getByRole('combobox', { name: 'Reagent' })
+    await user.type(search, 'glycine')
+    await user.keyboard('{ArrowDown}{ArrowUp}{Enter}')
+    expect(search).toHaveValue('Glycine')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('flags hazardous reagents', async () => {
+    const { pickReagent } = setup()
+    await pickReagent('sodium azide', /^Sodium azide/)
+    expect(screen.getByRole('note')).toHaveTextContent(
+      'Hazardous. Read the Safety Data Sheet before use.',
+    )
+  })
+
+  it('says what to enter before the calculation can run', async () => {
+    const { user, result, textbox } = setup()
+    expect(result()).toHaveTextContent(
+      'Enter the concentration and final volume to work out the mass to weigh.',
+    )
+    await user.type(textbox('Concentration'), '1')
+    expect(result()).toHaveTextContent(
+      'Enter the final volume to work out the mass to weigh.',
+    )
+  })
+
+  it('asks for the molar mass before a molar calculation', async () => {
+    const { user, result, textbox } = setup()
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '500')
+    expect(result()).toHaveTextContent('needs the molar mass')
+  })
+
+  it('needs no molar mass for a mass concentration', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('agarose', /^Agarose/)
+    await user.type(textbox('Concentration'), '1')
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Concentration unit' }),
+      '%w/v',
+    )
+    await user.type(textbox('Final volume'), '100')
+    expect(result()).toHaveTextContent('Weigh 1 g')
+  })
+
+  it('shows input errors on the field', async () => {
+    const { user, result, textbox } = setup()
+    await user.type(textbox('Final volume'), '5o0')
+    expect(textbox('Final volume')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('"5o0" is not a number')).toBeInTheDocument()
+    expect(result()).toHaveTextContent('Fix the highlighted fields.')
+  })
+
+  it('rejects impossible values', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '-5')
+    expect(result()).toHaveTextContent('Fix the highlighted fields.')
+    expect(
+      screen.getByText('The volume must be greater than zero.'),
+    ).toBeInTheDocument()
+  })
+})

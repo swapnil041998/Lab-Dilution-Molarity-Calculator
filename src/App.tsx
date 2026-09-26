@@ -1,3 +1,5 @@
+import { SolidCalculator } from './ui/calculators/SolidCalculator.tsx'
+
 function App() {
   return (
     <div className="app">
@@ -10,10 +12,14 @@ function App() {
       </header>
 
       <main className="app-main">
-        <p className="notice">
-          The calculators are under construction. See the project plan in{' '}
-          <code>docs/PLAN.md</code>.
-        </p>
+        <section aria-labelledby="solid-heading">
+          <h2 id="solid-heading">Make a solution from a solid</h2>
+          <p className="section-intro">
+            How much to weigh, what volume to make, or what concentration you
+            get: mass = concentration × volume × molar mass.
+          </p>
+          <SolidCalculator />
+        </section>
       </main>
 
       <footer className="app-footer">
