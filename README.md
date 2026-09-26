@@ -1,13 +1,31 @@
 # Lab Dilution & Molarity Calculator
 
 A web calculator for everyday lab work: how much solid to weigh, how much stock
-to pipette, and how to set up a dilution series. It is built for students and
-working lab staff across life science, biotech, microbiology, chemistry, pharma,
-food, environmental, agriculture and waste-treatment labs.
+to pipette, and how to dilute a concentrated reagent. It is built for students
+and working lab staff across life science, biotech, microbiology, chemistry,
+pharma, food, environmental, agriculture and waste-treatment labs.
 
-**Status:** early development. The project setup is done; the calculators are
-being built milestone by milestone. See [docs/PLAN.md](docs/PLAN.md) for the
-full plan and progress.
+**Status:** the first version (v1.0 core) is complete. Next up are serial
+dilutions, calibration standards, recipes and buffers (v1.1). See
+[docs/PLAN.md](docs/PLAN.md) for the full plan and progress.
+
+## What it does
+
+- **Three calculators:**
+  - **From a solid:** how much to weigh.
+  - **Dilution:** C1·V1 = C2·V2, for any concentration unit (M, mg/mL, ×, %, U/mL, cells/mL).
+  - **Concentrated liquid:** for reagents such as 37% HCl.
+- **A library of 232 reagents** across nine fields. Each has its formula weight, the
+  forms it comes in (anhydrous or hydrates), CAS number, density and assay for
+  liquids, pKa for buffers, hazard flags and practical notes. Any other compound
+  can be used by typing its formula.
+- **Bench steps for every result** (weigh, dissolve, bring to volume, label),
+  plus which pipette or balance to use. It warns about amounts too small to
+  measure and plans a two-step dilution when needed.
+- **"Show working"** with dimensional analysis for students. **Learn mode** adds
+  explanations and common mistakes. **Quick mode** puts results first.
+- **Runs entirely in the browser:** nothing you enter leaves your device. It works
+  on phones and tablets, in light and dark themes.
 
 ## Development
 

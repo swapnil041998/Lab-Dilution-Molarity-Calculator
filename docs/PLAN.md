@@ -158,7 +158,7 @@ All chemistry and unit math lives in `src/core/`, so it is fully unit-testable.
       liquid stocks, formatting, plus tests.
 - [x] **M3 Reagent data v0:** schema, formula parser, the ~150 most-used
       reagents, integrity tests.
-- [ ] **M4 v1.0 app:** core calculators, show work, warnings, procedure output,
+- [x] **M4 v1.0 app:** core calculators, show work, warnings, procedure output,
       Quick/Learn modes; deploy.
 - [ ] **M5 Library to ~500 entries,** custom reagents, PubChem lookup.
 - [ ] **M6 v1.1 workflows.**
