@@ -1,4 +1,5 @@
 import { UNITS, type UnitId } from '../../core/units.ts'
+import { UNIT_LABELS } from '../fields.ts'
 import type { UnitGroup } from '../unitOptions.ts'
 
 interface QuantityFieldProps<U extends UnitId> {
@@ -55,14 +56,14 @@ export function QuantityField<U extends UnitId>({
           {unitGroups.length === 1
             ? unitGroups[0]!.units.map((u) => (
                 <option key={u} value={u}>
-                  {UNITS[u].symbol}
+                  {UNIT_LABELS[u] ?? UNITS[u].symbol}
                 </option>
               ))
             : unitGroups.map((group) => (
                 <optgroup key={group.label} label={group.label}>
                   {group.units.map((u) => (
                     <option key={u} value={u}>
-                      {UNITS[u].symbol}
+                      {UNIT_LABELS[u] ?? UNITS[u].symbol}
                     </option>
                   ))}
                 </optgroup>

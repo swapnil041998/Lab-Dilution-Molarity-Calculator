@@ -23,6 +23,11 @@ export interface FormatOptions {
   readonly keepTrailingZeros?: boolean
   /** Decimal separator in the output. Default ".". */
   readonly decimalSeparator?: '.' | ','
+  /**
+   * Largest power of ten still written out in full. Default 5 (up to
+   * 999 999); counts use 3, so 2 × 10⁵ cells/mL reads the way labs write it.
+   */
+  readonly maxPlainExponent?: number
 }
 
 const DEFAULT_SIG_FIGS = 4
@@ -65,7 +70,8 @@ export function formatNumber(
     // toExponential rounds once and gives the exponent after rounding.
     const [mantissa, e] = value.toExponential(sigFigs - 1).split('e')
     const exp = Number(e)
-    if (exp >= PLAIN_RANGE.minExp && exp <= PLAIN_RANGE.maxExp) {
+    const maxExp = options.maxPlainExponent ?? PLAIN_RANGE.maxExp
+    if (exp >= PLAIN_RANGE.minExp && exp <= maxExp) {
       const decimals = Math.max(0, sigFigs - 1 - exp)
       text = Number(`${mantissa}e${exp}`).toFixed(decimals)
       if (!keepZeros) text = trimZeros(text)
@@ -159,7 +165,10 @@ export function formatQuantity(
       ? options.unit
       : bestUnit(q, options.unit, options.sigFigs)
   const symbol = UNITS[unit].symbol
-  const number = formatNumber(toUnit(q, unit), options)
+  const number = formatNumber(toUnit(q, unit), {
+    ...(q.kind === 'countConcentration' && { maxPlainExponent: 3 }),
+    ...options,
+  })
   const separator = symbol === '×' ? '' : ' '
   return { unit, symbol, number, text: `${number}${separator}${symbol}` }
 }

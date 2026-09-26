@@ -55,6 +55,12 @@ describe('formatNumber', () => {
     expect(formatNumber(1.5e-9, { decimalSeparator: ',' })).toBe('1,5 × 10⁻⁹')
   })
 
+  it('switches to scientific notation earlier when asked', () => {
+    expect(formatNumber(200000)).toBe('200000')
+    expect(formatNumber(200000, { maxPlainExponent: 3 })).toBe('2 × 10⁵')
+    expect(formatNumber(1500, { maxPlainExponent: 3 })).toBe('1500')
+  })
+
   it('shows non-finite values plainly', () => {
     expect(formatNumber(Number.NaN)).toBe('—')
     expect(formatNumber(Number.POSITIVE_INFINITY)).toBe('∞')
@@ -112,6 +118,8 @@ describe('formatQuantity', () => {
     [quantity(100, 'uM'), '100 µM'],
     [quantity(12.0764, 'M'), '12.08 M'],
     [quantity(2e6, '/mL'), '2 × 10⁶ /mL'],
+    [quantity(2e5, '/mL'), '2 × 10⁵ /mL'], // counts go scientific from 10⁴
+    [quantity(1500, '/mL'), '1500 /mL'],
     [quantity(10, 'x'), '10×'],
   ] as const)('%o → %s', (q, expected) => {
     expect(formatQuantity(q).text).toBe(expected)

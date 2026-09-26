@@ -28,3 +28,28 @@ export const MOLAR_MASS_UNITS = [
 ] as const satisfies readonly UnitGroup[]
 
 export type UnitIn<G extends readonly UnitGroup[]> = G[number]['units'][number]
+
+export const DILUTION_CONCENTRATION_UNITS = [
+  { label: 'Molar', units: ['M', 'mM', 'uM', 'nM', 'pM'] },
+  {
+    label: 'Mass per volume',
+    units: [
+      '%w/v',
+      'g/L',
+      'mg/mL',
+      'mg/L',
+      'ug/mL',
+      'ng/uL',
+      'ng/mL',
+      'ppm',
+      'ppb',
+    ],
+  },
+  { label: 'Stocks and fractions', units: ['x', '%v/v', '%w/w'] },
+  { label: 'Activity and counts', units: ['U/mL', 'IU/mL', '/mL'] },
+] as const satisfies readonly UnitGroup[]
+
+/** Solutions measured by mass, for w/w dilutions. */
+export const SOLUTION_MASS_UNITS = [
+  { units: ['kg', 'g', 'mg'] },
+] as const satisfies readonly UnitGroup[]

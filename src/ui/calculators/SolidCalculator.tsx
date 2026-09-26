@@ -1,11 +1,17 @@
 import { useState, type ReactNode } from 'react'
 import { formatNumber, formatQuantity } from '../../core/format.ts'
 import { solveMolarity, type MolaritySolution } from '../../core/molarity.ts'
-import { parseNumber } from '../../core/parse.ts'
 import type { CalcResult } from '../../core/result.ts'
 import { UNITS, quantity, type Quantity } from '../../core/units.ts'
 import { convertConcentration } from '../../core/concentration.ts'
 import { QuantityField } from '../components/QuantityField.tsx'
+import {
+  INCOMPLETE,
+  inSentence,
+  joinAnd,
+  parseField,
+  type ParsedField,
+} from '../fields.ts'
 import { ReagentCard } from '../components/ReagentCard.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
@@ -41,20 +47,6 @@ const GOALS: Record<SolveFor, string> = {
   mass: 'the mass to weigh',
   volume: 'the final volume',
   concentration: 'the concentration',
-}
-
-/** Errors that mean "not filled in yet" rather than "wrong". */
-const INCOMPLETE = new Set(['missing-input', 'missing-molar-mass'])
-
-interface ParsedField {
-  readonly value?: number
-  readonly error?: string
-}
-
-function parseField(text: string): ParsedField {
-  if (text.trim() === '') return {}
-  const result = parseNumber(text)
-  return result.ok ? { value: result.value } : { error: result.error }
 }
 
 /** Make a solution from a solid: m = C × V × MW. */
@@ -99,7 +91,7 @@ export function SolidCalculator() {
   )
   const prompt =
     missing.length > 0
-      ? `Enter the ${missing.map((f) => FIELD_LABELS[f]).join(' and ')} to work out ${GOALS[solveFor]}.`
+      ? `Enter the ${joinAnd(missing.map((f) => FIELD_LABELS[f]))} to work out ${GOALS[solveFor]}.`
       : undefined
 
   let result: CalcResult<MolaritySolution> | undefined
@@ -375,11 +367,4 @@ function formatConcentration(
 ): string {
   const sameKind = preferred !== undefined && UNITS[preferred].kind === q.kind
   return formatQuantity(q, sameKind ? { unit: preferred } : {}).text
-}
-
-/** "Sodium azide" → "sodium azide" mid-sentence; leaves "EDTA", "D-Glucose" alone. */
-function inSentence(name: string): string {
-  return /^[A-Z][a-z]/.test(name)
-    ? name[0]!.toLowerCase() + name.slice(1)
-    : name
 }

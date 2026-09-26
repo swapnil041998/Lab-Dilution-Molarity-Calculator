@@ -441,3 +441,38 @@ select {
   color: var(--danger);
   font-weight: 500;
 }
+
+/* Tabs */
+
+.tab-list {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.tab-list [role='tab'] {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab-list [role='tab'][aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.tab-list [role='tab']:hover {
+  color: var(--text);
+}
+
+.result-warning {
+  margin-top: 12px !important;
+}
