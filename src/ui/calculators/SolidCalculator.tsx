@@ -15,6 +15,12 @@ import {
 import { ReagentCard } from '../components/ReagentCard.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
+import { Workings } from '../components/Workings.tsx'
+import {
+  solidProcedure,
+  solidWorking,
+  type SolidExplainInput,
+} from '../explain/solid.ts'
 import {
   substanceMolarMass,
   substanceName,
@@ -225,6 +231,12 @@ export function SolidCalculator() {
         prompt={prompt}
         substance={substance}
         concentrationUnit={concentrationUnit}
+        units={{
+          mass: massUnit,
+          volume: volumeUnit,
+          concentration: concentrationUnit,
+          molarMass: molarMassUnit,
+        }}
       />
     </div>
   )
@@ -250,6 +262,7 @@ interface ResultProps {
   readonly prompt: string | undefined
   readonly substance: Substance | undefined
   readonly concentrationUnit: UnitIn<typeof SOLID_CONCENTRATION_UNITS>
+  readonly units: SolidExplainInput['units']
 }
 
 function Result({
@@ -259,6 +272,7 @@ function Result({
   prompt,
   substance,
   concentrationUnit,
+  units,
 }: ResultProps) {
   let body: ReactNode
   if (hasFieldErrors) {
@@ -282,6 +296,7 @@ function Result({
         solution={result.value}
         substance={substance}
         concentrationUnit={concentrationUnit}
+        units={units}
       />
     )
   }
@@ -297,11 +312,13 @@ function SolidResult({
   solution,
   substance,
   concentrationUnit,
+  units,
 }: {
   readonly solveFor: SolveFor
   readonly solution: MolaritySolution
   readonly substance: Substance | undefined
   readonly concentrationUnit: UnitIn<typeof SOLID_CONCENTRATION_UNITS>
+  readonly units: SolidExplainInput['units']
 }) {
   const mass = formatQuantity(solution.mass).text
   const volume = formatQuantity(solution.volume).text
@@ -349,6 +366,16 @@ function SolidResult({
     if (other.ok) details.push(`Also ${formatConcentration(other.value)}.`)
   }
 
+  const isBuffer =
+    substance?.kind === 'reagent' && (substance.reagent.pKa?.length ?? 0) > 0
+  const steps = solidProcedure({
+    solution,
+    name,
+    isBuffer,
+    concentrationText: concentration,
+  })
+  const working = solidWorking({ solveFor, solution, units })
+
   return (
     <>
       <p className="result-headline">{headline}</p>
@@ -357,6 +384,11 @@ function SolidResult({
           {d}
         </p>
       ))}
+      <Workings
+        steps={steps}
+        working={working}
+        summary={`${mass} of ${name} in ${volume} gives ${concentration}.`}
+      />
     </>
   )
 }

@@ -5,6 +5,12 @@ import type { CalcIssue, CalcResult } from '../../core/result.ts'
 import { UNITS, quantity, type Kind, type UnitId } from '../../core/units.ts'
 import { QuantityField } from '../components/QuantityField.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
+import { Workings } from '../components/Workings.tsx'
+import {
+  dilutionProcedure,
+  dilutionWorking,
+  type DilutionExplainInput,
+} from '../explain/dilution.ts'
 import {
   INCOMPLETE,
   joinAnd,
@@ -257,6 +263,12 @@ export function DilutionCalculator() {
             warnings={result.warnings}
             c1Unit={c1Unit}
             c2Unit={c2Unit}
+            units={{ c1: c1Unit, c2: c2Unit, v1: v1Shown, v2: v2Shown }}
+            molarMass={
+              needsMolarMass && parsed.molarMass.value !== undefined
+                ? quantity(parsed.molarMass.value, molarMassUnit).value
+                : undefined
+            }
           />
         )}
       </section>
@@ -270,12 +282,16 @@ function DilutionResult({
   warnings,
   c1Unit,
   c2Unit,
+  units,
+  molarMass,
 }: {
   readonly solveFor: SolveFor
   readonly solution: DilutionSolution
   readonly warnings: readonly CalcIssue[]
   readonly c1Unit: ConcentrationUnit
   readonly c2Unit: ConcentrationUnit
+  readonly units: DilutionExplainInput['units']
+  readonly molarMass: number | undefined
 }) {
   const byMass = solution.v1.kind === 'mass'
   const concentrationText = (
@@ -338,6 +354,16 @@ function DilutionResult({
           {w.message}
         </p>
       ))}
+      <Workings
+        steps={dilutionProcedure({ solution, c1Text: c1, c2Text: c2 })}
+        working={dilutionWorking({
+          solveFor,
+          solution,
+          units,
+          ...(molarMass !== undefined && { molarMass }),
+        })}
+        summary={`${v1} of ${c1} stock made up to ${v2} gives ${c2}.`}
+      />
     </>
   )
 }

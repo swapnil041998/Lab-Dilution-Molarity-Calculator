@@ -11,6 +11,8 @@ import { REAGENTS } from '../../data/reagents/index.ts'
 import { QuantityField } from '../components/QuantityField.tsx'
 import { ReagentCard } from '../components/ReagentCard.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
+import { Workings } from '../components/Workings.tsx'
+import { liquidProcedure, liquidWorking } from '../explain/liquid.ts'
 import {
   INCOMPLETE,
   inSentence,
@@ -273,6 +275,14 @@ export function LiquidCalculator() {
             density={parsed.density.value!}
             densityUnit={densityUnit}
             targetUnit={targetUnit}
+            finalVolumeUnit={finalVolumeUnit}
+            assay={parsed.assay.value! / 100}
+            molarMass={
+              parsed.molarMass.value === undefined
+                ? undefined
+                : quantity(parsed.molarMass.value, molarMassUnit).value
+            }
+            addToWater={addToWater}
           />
         )}
       </section>
@@ -313,6 +323,10 @@ function LiquidResult({
   density,
   densityUnit,
   targetUnit,
+  finalVolumeUnit,
+  assay,
+  molarMass,
+  addToWater,
 }: {
   readonly solution: LiquidStockDilution
   readonly warnings: readonly CalcIssue[]
@@ -320,8 +334,15 @@ function LiquidResult({
   readonly density: number
   readonly densityUnit: UnitIn<typeof DENSITY_UNITS>
   readonly targetUnit: UnitIn<typeof LIQUID_TARGET_UNITS>
+  readonly finalVolumeUnit: UnitIn<typeof VOLUME_UNITS>
+  /** As a fraction, e.g. 0.37. */
+  readonly assay: number
+  /** g/mol, if known. */
+  readonly molarMass: number | undefined
+  readonly addToWater: boolean
 }) {
   const { dilution } = solution
+  const densityQuantity = quantity(density, densityUnit)
   const take = quantityText(dilution.v1)
   const finalVolume = quantityText(dilution.v2)
   const diluent = quantityText(dilution.diluent)
@@ -330,7 +351,7 @@ function LiquidResult({
     UNITS[targetUnit].kind === dilution.c2.kind ? { unit: targetUnit } : {},
   )
   // Weighing is more accurate for viscous liquids such as H3PO4 or glycerol.
-  const grams = dilution.v1.value * quantity(density, densityUnit).value
+  const grams = dilution.v1.value * densityQuantity.value
   const weight = quantityText({ kind: 'mass', value: grams })
   const safety = warnings.find((w) => w.code === 'add-acid-to-water')
 
@@ -362,6 +383,27 @@ function LiquidResult({
             {w.message}
           </p>
         ))}
+      <Workings
+        steps={liquidProcedure({
+          solution,
+          name: name ?? 'the stock',
+          addToWater,
+          densityGPerL: densityQuantity.value,
+          targetText: target,
+        })}
+        working={liquidWorking({
+          solution,
+          assay,
+          density: densityQuantity,
+          ...(molarMass !== undefined && { molarMass }),
+          units: {
+            density: densityUnit,
+            target: targetUnit,
+            finalVolume: finalVolumeUnit,
+          },
+        })}
+        summary={`${take} of ${name ?? 'the stock'} made up to ${finalVolume} gives ${target}.`}
+      />
     </>
   )
 }

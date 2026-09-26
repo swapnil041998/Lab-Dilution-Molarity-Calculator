@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { DilutionCalculator } from './DilutionCalculator.tsx'
@@ -30,6 +30,25 @@ describe('DilutionCalculator', () => {
     expect(result()).toHaveTextContent(
       'Dilution factor 100: 1 part stock + 99 parts diluent.',
     )
+  })
+
+  it('gives bench steps and the working', async () => {
+    const { user, result, textbox } = setup()
+    await user.type(textbox('Stock concentration (C1)'), '10')
+    await user.type(textbox('Final concentration (C2)'), '100')
+    await user.type(textbox('Final volume (V2)'), '10')
+    expect(
+      within(result())
+        .getAllByRole('listitem')
+        .map((s) => s.textContent),
+    ).toEqual([
+      'Put about 7.9 mL of diluent in a 10 mL volumetric flask or tube.',
+      'Add 100 µL of the 10 mM stock.',
+      'Bring to 10 mL with diluent and mix well.',
+      'Label with the name, 100 µM, the date and your initials.',
+    ])
+    await user.click(within(result()).getByText('Show working'))
+    expect(result()).toHaveTextContent('V1 = 0.1 mM × 10 mL ÷ 10 mM = 0.1 mL')
   })
 
   it('50× TAE → 1 L of 1×: take 20 mL', async () => {

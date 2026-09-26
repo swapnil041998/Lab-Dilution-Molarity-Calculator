@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { LiquidCalculator } from './LiquidCalculator.tsx'
@@ -40,6 +40,17 @@ describe('LiquidCalculator', () => {
     )
     expect(result()).toHaveTextContent('Or weigh 98.54 g')
     expect(result()).toHaveTextContent('never water to the reagent')
+
+    const steps = within(result())
+      .getAllByRole('listitem')
+      .map((s) => s.textContent)
+    expect(steps[0]).toMatch(/fume hood/)
+    expect(steps).toContain(
+      'Measure 83.51 mL of hydrochloric acid 37% (or weigh 98.54 g).',
+    )
+    expect(steps).toContain('Let the solution cool to room temperature.')
+    await user.click(within(result()).getByText('Show working'))
+    expect(result()).toHaveTextContent('436.6 g/L ÷ 36.46 g/mol = 11.97 mol/L')
   })
 
   it('neat glycerol to 10% w/v: take 7.937 mL or weigh 10 g', async () => {

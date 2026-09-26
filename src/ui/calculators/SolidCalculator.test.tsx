@@ -34,6 +34,58 @@ describe('SolidCalculator', () => {
     expect(result()).toHaveTextContent('That is 500 mmol.')
   })
 
+  it('gives bench steps and the working, and copies them', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '500')
+
+    const steps = within(result()).getAllByRole('listitem')
+    expect(steps.map((s) => s.textContent)).toEqual([
+      'Weigh 29.22 g of sodium chloride.',
+      'Dissolve it in about 400 mL of water (about 80% of the final volume).',
+      'Transfer to a 500 mL volumetric flask or measuring cylinder and bring to 500 mL with water.',
+      'Mix well by inverting several times.',
+      'Label with sodium chloride, 1 M, the date and your initials.',
+    ])
+
+    const working = within(result()).getByText('Show working')
+    await user.click(working)
+    expect(result()).toHaveTextContent(
+      'mass = concentration × volume × molar mass',
+    )
+    // L and mol cancel in the factor-label chain
+    const struck = result().querySelectorAll('s.cancelled')
+    expect([...struck].map((el) => el.firstChild?.textContent)).toEqual([
+      'L',
+      'mol',
+      'L',
+      'mol',
+    ])
+
+    await user.click(
+      within(result()).getByRole('button', { name: 'Copy steps and working' }),
+    )
+    const copied = await navigator.clipboard.readText()
+    expect(copied).toContain('1. Weigh 29.22 g of sodium chloride.')
+    expect(copied).toContain(
+      '0.5 L × (1 mol / 1 L) × (58.44 g / 1 mol) = 29.22 g',
+    )
+    expect(
+      within(result()).getByRole('button', { name: 'Copied' }),
+    ).toBeInTheDocument()
+  })
+
+  it('adds a pH step for buffers', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('tris base', /^Tris base/)
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '1000')
+    expect(result()).toHaveTextContent(
+      'Adjust the pH now if needed, before bringing to volume.',
+    )
+  })
+
   it('solves for the final volume', async () => {
     const { user, result, textbox, pickReagent } = setup()
     await pickReagent('NaCl', /^Sodium chloride/)
