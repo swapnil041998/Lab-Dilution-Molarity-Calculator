@@ -102,13 +102,14 @@ export function expressedAsFactor(
   })
 }
 
-/** Hydrogen and oxygen come with almost everything, so they link last. */
+/** Oxygen and hydrogen come with almost everything. */
 const COMMON = ['O', 'H']
 
 /**
- * Elements two formulas share, the likeliest link first: an element other
- * than O or H, in the order it appears in the "as" form. Empty if either
- * formula does not parse.
+ * Elements that can link two formulas: the ones they share other than O and
+ * H, in Hill order. O and H only when nothing else is shared (H₂O₂ as O₂),
+ * since KH₂PO₄ as P₂O₅ by oxygen would mean nothing. Empty if either formula
+ * does not parse or they share nothing.
  */
 export function sharedElements(species: string, as: string): string[] {
   const s = parseFormula(species)
@@ -117,10 +118,10 @@ export function sharedElements(species: string, as: string): string[] {
   const shared = a.value.composition
     .map((e) => e.symbol)
     .filter((symbol) => atoms(s.value, symbol) > 0)
-  return [
-    ...shared.filter((e) => !COMMON.includes(e)),
-    ...COMMON.filter((e) => shared.includes(e)),
-  ]
+  const specific = shared.filter((e) => !COMMON.includes(e))
+  return specific.length > 0
+    ? specific
+    : COMMON.filter((e) => shared.includes(e))
 }
 
 export type ExpressedAsDirection = 'toAs' | 'toSpecies'

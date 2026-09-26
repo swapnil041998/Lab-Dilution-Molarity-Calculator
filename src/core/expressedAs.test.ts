@@ -96,11 +96,16 @@ describe('expressedAsFactor', () => {
 })
 
 describe('sharedElements', () => {
-  it('puts O and H last', () => {
+  it('links by O or H only when nothing else is shared', () => {
     expect(sharedElements('NO3', 'N')).toEqual(['N'])
-    expect(sharedElements('K2SO4', 'K2O')).toEqual(['K', 'O'])
+    expect(sharedElements('K2SO4', 'K2O')).toEqual(['K'])
+    expect(sharedElements('(NH4)2SO4', 'NH3')).toEqual(['N'])
     expect(sharedElements('H2O2', 'O2')).toEqual(['O'])
-    expect(sharedElements('(NH4)2SO4', 'NH3')).toEqual(['N', 'H'])
+    expect(sharedElements('H2O2', 'H2O')).toEqual(['O', 'H'])
+  })
+
+  it('offers every other element the two share', () => {
+    expect(sharedElements('CuSO4·5H2O', 'CuS')).toEqual(['Cu', 'S'])
   })
 
   it('is empty when a formula does not parse or nothing is shared', () => {

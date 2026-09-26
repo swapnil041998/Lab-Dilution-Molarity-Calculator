@@ -151,7 +151,7 @@ const TABLE: readonly {
   {
     kind: 'massFraction',
     label: 'Mass per mass',
-    include: '% w/w and mg/kg',
+    include: 'mass per mass (% w/w)',
     rows: [
       { unit: '%w/w' },
       { unit: 'mg/kg', note: 'ppm by weight' },
@@ -161,7 +161,7 @@ const TABLE: readonly {
   {
     kind: 'volumeFraction',
     label: 'Volume per volume',
-    include: '% v/v',
+    include: 'volume per volume (% v/v)',
     rows: [{ unit: '%v/v' }, { unit: 'mL/L' }, { unit: 'uL/L', note: 'ppmv' }],
   },
 ]
@@ -312,7 +312,7 @@ function useUnitsConverter(): ConverterView {
           value={equivalents}
           onChange={setEquivalents}
           error={fieldErrors.equivalents}
-          hint="For N and meq/L: the charge of an ion (Ca²⁺ is 2), or the H⁺ or OH⁻ one molecule of an acid or base gives (H₂SO₄ is 2)."
+          hint="For N and meq/L: the charge of an ion (Ca²⁺ is 2), the H⁺ or OH⁻ one molecule of an acid or base gives (H₂SO₄ is 2), or the electrons one formula unit takes in a redox titration (KMnO₄ is 5)."
         />
         <QuantityField
           id="convert-solution-density"
@@ -449,7 +449,9 @@ const PRESET_GROUPS = [
   })),
   {
     label: 'Your own',
-    options: [{ value: CUSTOM, label: 'Any compound as an element in it' }],
+    options: [
+      { value: CUSTOM, label: 'Any formula, by an element they share' },
+    ],
   },
 ]
 
@@ -634,7 +636,7 @@ function useExpressedAsConverter(): ConverterView {
             value={asText}
             onChange={setAsText}
             error={errors.as}
-            hint="A formula: an element such as Pb or N, or a compound such as P2O5."
+            hint="An element such as Pb or N, or a compound such as P2O5. The two are linked by an element they share; hardness and alkalinity as CaCO₃ go by charge instead, so use those presets."
             placeholder="e.g. Pb"
           />
           {shared.length > 1 && (
@@ -737,7 +739,7 @@ function ExpressedAsResult({
           </p>
         </>
       )}
-      {make && reagent?.highHazard && (
+      {reagent?.highHazard && (
         <p className="banner banner-danger result-warning">
           Read the safety data sheet first for {inSentence(reagent.name)}.
         </p>

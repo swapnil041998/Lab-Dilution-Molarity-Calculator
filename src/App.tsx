@@ -210,7 +210,7 @@ const TABS: readonly Tab[] = [
         <LearnPanel
           ideas={[
             'A conversion changes how a solution is described, never the solution. Within one kind (mg/L to µg/L) it is a power of ten; between kinds it needs a bridge: the molar mass (M and g/L), n (M and N), or a density (% w/w and % v/v).',
-            'Normality counts reacting units: N = M × n, where n is the charge of an ion or the H⁺ or OH⁻ one molecule gives. 1 M H₂SO₄ is 2 N, and 40 mg/L of Ca²⁺ is 2 meq/L.',
+            'Normality counts reacting units: N = M × n, where n is the charge of an ion or the H⁺ or OH⁻ one molecule gives. 1 M H₂SO₄ is 2 N, and 40 mg/L of Ca²⁺ is about 2 meq/L.',
             '"As N" or "as CaCO₃" reports a substance by what it has in common with another. 50 mg/L of nitrate contains 11.3 mg/L of nitrogen, so it is 11.3 mg/L as N.',
           ]}
           mistakes={[

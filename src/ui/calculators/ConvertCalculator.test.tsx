@@ -55,7 +55,7 @@ describe('ConvertCalculator: units', () => {
       'Add the equivalents per mole (n) to include normality.',
     )
     expect(plainText(result())).toContain(
-      'Add the density of the solution to include % w/w and mg/kg.',
+      'Add the density of the solution to include mass per mass (% w/w).',
     )
 
     await user.selectOptions(select('Convert to'), 'ppm')
@@ -166,6 +166,9 @@ describe('ConvertCalculator: expressed as', () => {
     await user.selectOptions(select('Conversion'), 'lead-nitrate')
     await user.type(textbox('Concentration'), '1000')
     expect(headline()).toBe('1000 mg/L as Pb = 1598 mg/L Pb(NO₃)₂')
+    expect(plainText(result())).toContain(
+      'Read the safety data sheet first for lead(II) nitrate.',
+    )
     await user.type(textbox('Volume to make'), '1')
     expect(status()).toHaveTextContent(
       '1000 mg/L as Pb = 1598 mg/L Pb(NO₃)₂. Weigh 1.598 g for 1 L.',
@@ -195,6 +198,19 @@ describe('ConvertCalculator: expressed as', () => {
     await user.click(screen.getByRole('radio', { name: '(NH₄)₂SO₄' }))
     await user.type(textbox('Concentration'), '100')
     expect(headline()).toBe('100 mg/L (NH₄)₂SO₄ = 21.2 mg/L as N')
+  })
+
+  it('does not link by O or H when another element is shared', async () => {
+    const { user, textbox, select, headline, pick } = await expressedAs()
+    await user.selectOptions(select('Conversion'), 'custom')
+    await pick('ammonium sulfate', /^Ammonium sulfate/)
+    await user.type(textbox('Expressed as'), 'NH3')
+    expect(
+      screen.queryByRole('combobox', { name: 'Linked by' }),
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole('radio', { name: '(NH₄)₂SO₄' }))
+    await user.type(textbox('Concentration'), '100')
+    expect(headline()).toBe('100 mg/L (NH₄)₂SO₄ = 25.78 mg/L as NH₃')
   })
 
   it('asks which element links two that share more than one', async () => {
