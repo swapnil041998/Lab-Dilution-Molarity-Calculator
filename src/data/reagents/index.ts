@@ -6,7 +6,10 @@
 
 import type { Reagent } from '../../core/reagent.ts'
 import { ACIDS_BASES } from './acids-bases.ts'
+import { ANTIBIOTICS } from './antibiotics.ts'
+import { BIOCHEMICALS } from './biochemicals.ts'
 import { BUFFERS } from './buffers.ts'
+import { MEDIA } from './media.ts'
 import { METALS } from './metals.ts'
 import { SALTS } from './salts.ts'
 
@@ -15,6 +18,9 @@ export const REAGENTS: readonly Reagent[] = [
   ...BUFFERS,
   ...SALTS,
   ...METALS,
+  ...BIOCHEMICALS,
+  ...ANTIBIOTICS,
+  ...MEDIA,
 ]
 
 export const REAGENTS_BY_ID: ReadonlyMap<string, Reagent> = new Map(
