@@ -25,11 +25,31 @@ export function joinAnd(items: readonly string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 }
 
-/** "Sodium azide" → "sodium azide" mid-sentence; leaves "EDTA", "D-Glucose" alone. */
+/** Names conventionally capitalised even mid-sentence. */
+const KEEP_CAPITAL = new Set([
+  'Tris',
+  'Bis-Tris',
+  'Tricine',
+  'Bicine',
+  'Triton',
+  'Tween',
+  'Coomassie',
+  'Eriochrome',
+])
+
+/**
+ * A reagent name as it reads mid-sentence: "Sodium azide" → "sodium azide",
+ * "β-Mercaptoethanol" → "β-mercaptoethanol", "D-Glucose" → "D-glucose".
+ * Acronyms (EDTA, HEPES) and names such as Tris keep their capitals.
+ */
 export function inSentence(name: string): string {
-  return /^[A-Z][a-z]/.test(name)
-    ? name[0]!.toLowerCase() + name.slice(1)
-    : name
+  const firstWord = name.split(/[\s,]/)[0]!
+  if (KEEP_CAPITAL.has(firstWord)) return name
+  // Optional prefixes such as "β-", "D-", "N,N'-", "L-(+)-", "2,4-"
+  return name.replace(
+    /^((?:[A-Za-z0-9α-ω,'′()+]+-)*)([A-Z])(?=[a-z])/,
+    (_, prefix: string, letter: string) => prefix + letter.toLowerCase(),
+  )
 }
 
 /** Friendlier labels than the unit symbol where the symbol alone is unclear. */

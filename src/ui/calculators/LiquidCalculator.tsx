@@ -5,14 +5,17 @@ import {
   type LiquidStockConcentration,
   type LiquidStockDilution,
 } from '../../core/liquids.ts'
+import { planTwoStepDilution, volumeAdvice } from '../../core/bench.ts'
 import type { CalcIssue, CalcResult } from '../../core/result.ts'
 import { UNITS, quantity } from '../../core/units.ts'
 import { REAGENTS } from '../../data/reagents/index.ts'
 import { QuantityField } from '../components/QuantityField.tsx'
 import { ReagentCard } from '../components/ReagentCard.tsx'
+import { BenchNotes } from '../components/BenchNotes.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
 import { Workings } from '../components/Workings.tsx'
 import { liquidProcedure, liquidWorking } from '../explain/liquid.ts'
+import { twoStepProcedure } from '../explain/twoStep.ts'
 import {
   INCOMPLETE,
   inSentence,
@@ -354,6 +357,12 @@ function LiquidResult({
   const grams = dilution.v1.value * densityQuantity.value
   const weight = quantityText({ kind: 'mass', value: grams })
   const safety = warnings.find((w) => w.code === 'add-acid-to-water')
+  const takeAdvice = volumeAdvice({ kind: 'volume', value: dilution.v1.value })
+  const plan = planTwoStepDilution({
+    dilutionFactor: dilution.dilutionFactor,
+    target: dilution.c2,
+    finalVolume: { kind: 'volume', value: dilution.v2.value },
+  })
 
   return (
     <>
@@ -383,14 +392,32 @@ function LiquidResult({
             {w.message}
           </p>
         ))}
-      <Workings
-        steps={liquidProcedure({
-          solution,
-          name: name ?? 'the stock',
-          addToWater,
-          densityGPerL: densityQuantity.value,
-          targetText: target,
+      <BenchNotes
+        advice={[takeAdvice]}
+        {...(takeAdvice.issue && {
+          remedy: plan
+            ? 'The steps below use two dilutions.'
+            : 'The dilution is too large even for two steps: use a serial dilution.',
         })}
+      />
+      <Workings
+        steps={
+          plan
+            ? twoStepProcedure({
+                plan,
+                finalVolume: dilution.v2.value,
+                stockName: name ?? 'the stock',
+                diluent: 'water',
+                targetText: target,
+              })
+            : liquidProcedure({
+                solution,
+                name: name ?? 'the stock',
+                addToWater,
+                densityGPerL: densityQuantity.value,
+                targetText: target,
+              })
+        }
         working={liquidWorking({
           solution,
           assay,

@@ -9,13 +9,15 @@ function setup() {
   render(<SolidCalculator />)
   const result = () => screen.getByRole('region', { name: 'Result' })
   const textbox = (name: string) => screen.getByRole('textbox', { name })
+  const unit = (name: string) =>
+    screen.getByRole('combobox', { name: `${name} unit` })
   const pickReagent = async (query: string, option: RegExp) => {
     const search = screen.getByRole('combobox', { name: 'Reagent' })
     await user.clear(search)
     await user.type(search, query)
     await user.click(screen.getByRole('option', { name: option }))
   }
-  return { user, result, textbox, pickReagent }
+  return { user, result, textbox, unit, pickReagent }
 }
 
 describe('SolidCalculator', () => {
@@ -40,7 +42,9 @@ describe('SolidCalculator', () => {
     await user.type(textbox('Concentration'), '1')
     await user.type(textbox('Final volume'), '500')
 
-    const steps = within(result()).getAllByRole('listitem')
+    const steps = within(
+      within(result()).getByRole('list', { name: 'Steps' }),
+    ).getAllByRole('listitem')
     expect(steps.map((s) => s.textContent)).toEqual([
       'Weigh 29.22 g of sodium chloride.',
       'Dissolve it in about 400 mL of water (about 80% of the final volume).',
@@ -74,6 +78,29 @@ describe('SolidCalculator', () => {
     expect(
       within(result()).getByRole('button', { name: 'Copied' }),
     ).toBeInTheDocument()
+  })
+
+  it('says which balance to use', async () => {
+    const { user, result, textbox, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.type(textbox('Concentration'), '1')
+    await user.type(textbox('Final volume'), '500')
+    expect(result()).toHaveTextContent(
+      'A top-loading balance (0.01 g) is accurate enough.',
+    )
+  })
+
+  it('suggests a stock when the amount is too small to weigh', async () => {
+    const { user, result, textbox, unit, pickReagent } = setup()
+    await pickReagent('NaCl', /^Sodium chloride/)
+    await user.type(textbox('Concentration'), '100')
+    await user.selectOptions(unit('Concentration'), 'uM')
+    await user.type(textbox('Final volume'), '10')
+    expect(screen.getByRole('note')).toHaveTextContent(
+      '58.44 µg is too little to weigh accurately (aim for at least 10 mg). ' +
+        'Make a 1000× stock instead: 58.44 mg in 10 mL gives 100 mM. Then dilute it 1 in 1000.',
+    )
+    expect(result()).toBeInTheDocument()
   })
 
   it('adds a pH step for buffers', async () => {

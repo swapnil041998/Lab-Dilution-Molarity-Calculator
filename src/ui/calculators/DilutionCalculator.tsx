@@ -1,9 +1,15 @@
 import { useState, type ReactNode } from 'react'
+import {
+  massAdvice,
+  planTwoStepDilution,
+  volumeAdvice,
+} from '../../core/bench.ts'
 import { solveDilution, type DilutionSolution } from '../../core/dilution.ts'
 import { formatNumber } from '../../core/format.ts'
 import type { CalcIssue, CalcResult } from '../../core/result.ts'
 import { UNITS, quantity, type Kind, type UnitId } from '../../core/units.ts'
 import { QuantityField } from '../components/QuantityField.tsx'
+import { BenchNotes } from '../components/BenchNotes.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
 import { Workings } from '../components/Workings.tsx'
 import {
@@ -11,6 +17,7 @@ import {
   dilutionWorking,
   type DilutionExplainInput,
 } from '../explain/dilution.ts'
+import { twoStepProcedure } from '../explain/twoStep.ts'
 import {
   INCOMPLETE,
   joinAnd,
@@ -333,11 +340,27 @@ function DilutionResult({
       ? `Weigh ${v1} of the ${c1} stock and add diluent to a total of ${v2} (${diluent} of diluent). This gives ${c2}.`
       : `Add ${v1} of the ${c1} stock and bring to ${v2} with diluent (about ${diluent}). This gives ${c2}.`,
   ]
+  // Which pipette or balance for the stock, and a two-step plan if tiny.
+  const takeAdvice =
+    solution.v1.kind === 'mass'
+      ? massAdvice({ kind: 'mass', value: solution.v1.value })
+      : volumeAdvice({ kind: 'volume', value: solution.v1.value })
+  const plan =
+    solution.v2.kind === 'volume'
+      ? planTwoStepDilution({
+          dilutionFactor: solution.dilutionFactor,
+          target: solution.c2,
+          finalVolume: { kind: 'volume', value: solution.v2.value },
+        })
+      : undefined
+
   const factor = solution.dilutionFactor
   if (factor > 1.0000001) {
+    const f = formatNumber(factor, { sigFigs: 3 })
     details.push(
-      `Dilution factor ${formatNumber(factor, { sigFigs: 3 })}: 1 part stock + ` +
-        `${formatNumber(factor - 1, { sigFigs: 3 })} parts diluent.`,
+      factor < 1000
+        ? `Dilution factor ${f}: 1 part stock + ${formatNumber(factor - 1, { sigFigs: 3 })} parts diluent.`
+        : `Dilution factor ${f}.`,
     )
   }
 
@@ -354,8 +377,26 @@ function DilutionResult({
           {w.message}
         </p>
       ))}
+      <BenchNotes
+        advice={[takeAdvice]}
+        {...(takeAdvice.issue && {
+          remedy: plan
+            ? 'The steps below use two dilutions.'
+            : 'The dilution is too large even for two steps: use a serial dilution.',
+        })}
+      />
       <Workings
-        steps={dilutionProcedure({ solution, c1Text: c1, c2Text: c2 })}
+        steps={
+          plan
+            ? twoStepProcedure({
+                plan,
+                finalVolume: solution.v2.value,
+                stockName: `the ${c1} stock`,
+                diluent: 'diluent',
+                targetText: c2,
+              })
+            : dilutionProcedure({ solution, c1Text: c1, c2Text: c2 })
+        }
         working={dilutionWorking({
           solveFor,
           solution,

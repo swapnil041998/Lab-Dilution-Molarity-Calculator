@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { formatNumber, formatQuantity } from '../../core/format.ts'
+import { massAdvice } from '../../core/bench.ts'
 import { solveMolarity, type MolaritySolution } from '../../core/molarity.ts'
 import type { CalcResult } from '../../core/result.ts'
 import { UNITS, quantity, type Quantity } from '../../core/units.ts'
@@ -10,10 +11,12 @@ import {
   inSentence,
   joinAnd,
   parseField,
+  quantityText,
   type ParsedField,
 } from '../fields.ts'
 import { ReagentCard } from '../components/ReagentCard.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
+import { BenchNotes } from '../components/BenchNotes.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
 import { Workings } from '../components/Workings.tsx'
 import {
@@ -376,6 +379,20 @@ function SolidResult({
   })
   const working = solidWorking({ solveFor, solution, units })
 
+  // Too little to weigh: suggest a stock that is 10×, 100×, ... stronger.
+  const weighing = massAdvice(solution.mass)
+  const factor = weighing.stockFactor
+  const remedy =
+    factor &&
+    `Make a ${factor}× stock instead: ${quantityText({ kind: 'mass', value: solution.mass.value * factor })} ` +
+      `in ${volume} gives ${formatConcentration(
+        {
+          kind: solution.concentration.kind,
+          value: solution.concentration.value * factor,
+        },
+        concentrationUnit,
+      )}. Then dilute it 1 in ${factor}.`
+
   return (
     <>
       <p className="result-headline">{headline}</p>
@@ -384,6 +401,7 @@ function SolidResult({
           {d}
         </p>
       ))}
+      <BenchNotes advice={[weighing]} {...(remedy && { remedy })} />
       <Workings
         steps={steps}
         working={working}

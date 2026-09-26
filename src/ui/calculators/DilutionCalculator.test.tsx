@@ -38,7 +38,7 @@ describe('DilutionCalculator', () => {
     await user.type(textbox('Final concentration (C2)'), '100')
     await user.type(textbox('Final volume (V2)'), '10')
     expect(
-      within(result())
+      within(within(result()).getByRole('list', { name: 'Steps' }))
         .getAllByRole('listitem')
         .map((s) => s.textContent),
     ).toEqual([
@@ -49,6 +49,40 @@ describe('DilutionCalculator', () => {
     ])
     await user.click(within(result()).getByText('Show working'))
     expect(result()).toHaveTextContent('V1 = 0.1 mM × 10 mL ÷ 10 mM = 0.1 mL')
+  })
+
+  it('suggests the pipette', async () => {
+    const { user, result, textbox } = setup()
+    await user.type(textbox('Stock concentration (C1)'), '10')
+    await user.type(textbox('Final concentration (C2)'), '100')
+    await user.type(textbox('Final volume (V2)'), '10')
+    expect(result()).toHaveTextContent('Use a P200 set to 100 µL.')
+    expect(result()).not.toHaveTextContent('intermediate')
+  })
+
+  it('plans two steps when the stock volume is too small', async () => {
+    const { user, result, textbox, unit } = setup()
+    await user.type(textbox('Stock concentration (C1)'), '10')
+    await user.type(textbox('Final concentration (C2)'), '10')
+    await user.selectOptions(unit('Final concentration (C2)'), 'nM')
+    await user.type(textbox('Final volume (V2)'), '10')
+    expect(screen.getByRole('note')).toHaveTextContent(
+      '10 nL is too small to pipette accurately. Dilute in two steps instead. The steps below use two dilutions.',
+    )
+    expect(result()).toHaveTextContent('Dilution factor 1 × 10⁶.')
+    const steps = within(within(result()).getByRole('list', { name: 'Steps' }))
+      .getAllByRole('listitem')
+      .map((s) => s.textContent)
+    expect(steps).toEqual([
+      'Make the intermediate: put 9.99 mL of diluent in a tube, add 10 µL of the 10 mM stock and mix well. This gives 10 mL of 10 µM (1 in 1000).',
+      'Put about 7.99 mL of diluent in a 10 mL volumetric flask or tube and add 10 µL of the intermediate (1 in 1000).',
+      'Bring to 10 mL with diluent and mix well.',
+      'Label with the name, 10 nM, the date and your initials.',
+    ])
+    // no pipette fits, so there is no equipment line
+    expect(
+      within(result()).queryByRole('list', { name: 'Equipment' }),
+    ).toBeNull()
   })
 
   it('50× TAE → 1 L of 1×: take 20 mL', async () => {

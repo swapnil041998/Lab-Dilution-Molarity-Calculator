@@ -12,6 +12,8 @@
   --danger-soft: #fee2e2;
   --info-soft: #e0f2fe;
   --info-text: #075985;
+  --warning-soft: #fef3c7;
+  --warning-text: #92400e;
   --focus: #2563eb;
   --radius: 10px;
 
@@ -42,6 +44,8 @@
     --danger-soft: #3b1219;
     --info-soft: #0c2a3e;
     --info-text: #bae6fd;
+    --warning-soft: #3a2a0a;
+    --warning-text: #fcd34d;
     --focus: #60a5fa;
   }
 }
@@ -615,4 +619,47 @@ select {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* At the bench */
+
+.bench {
+  margin-top: 12px;
+}
+
+.bench-advice {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text);
+}
+
+.bench .banner {
+  margin-top: 8px !important;
+}
+
+.banner-warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.two-step {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.two-step h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.two-step ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.two-step li {
+  margin-bottom: 6px;
 }

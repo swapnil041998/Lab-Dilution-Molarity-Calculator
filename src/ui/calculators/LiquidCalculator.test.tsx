@@ -41,7 +41,7 @@ describe('LiquidCalculator', () => {
     expect(result()).toHaveTextContent('Or weigh 98.54 g')
     expect(result()).toHaveTextContent('never water to the reagent')
 
-    const steps = within(result())
+    const steps = within(within(result()).getByRole('list', { name: 'Steps' }))
       .getAllByRole('listitem')
       .map((s) => s.textContent)
     expect(steps[0]).toMatch(/fume hood/)
@@ -51,6 +51,30 @@ describe('LiquidCalculator', () => {
     expect(steps).toContain('Let the solution cool to room temperature.')
     await user.click(within(result()).getByText('Show working'))
     expect(result()).toHaveTextContent('436.6 g/L ÷ 36.46 g/mol = 11.97 mol/L')
+  })
+
+  it('suggests how to measure the acid', async () => {
+    const { user, result, textbox, pick } = setup()
+    await pick('hydrochloric', /Hydrochloric acid 37%/)
+    await user.type(textbox('Concentration you want'), '1')
+    await user.type(textbox('Final volume'), '1000')
+    expect(result()).toHaveTextContent(
+      'Use a 100 mL measuring cylinder, or a volumetric flask for accurate work.',
+    )
+  })
+
+  it('plans two steps for a tiny volume of a neat liquid', async () => {
+    const { user, textbox, unit, pick } = setup()
+    await pick('mercaptoethanol', /Mercaptoethanol/)
+    await user.type(textbox('Concentration you want'), '1')
+    await user.selectOptions(unit('Concentration you want'), 'mM')
+    await user.type(textbox('Final volume'), '1')
+    const steps = within(screen.getByRole('list', { name: 'Steps' }))
+      .getAllByRole('listitem')
+      .map((s) => s.textContent)
+    expect(steps[0]).toBe(
+      'Make the intermediate: put 9.99 mL of water in a tube, add 10 µL of β-mercaptoethanol and mix well. This gives 10 mL of 14.26 mM (1 in 1000).',
+    )
   })
 
   it('neat glycerol to 10% w/v: take 7.937 mL or weigh 10 g', async () => {

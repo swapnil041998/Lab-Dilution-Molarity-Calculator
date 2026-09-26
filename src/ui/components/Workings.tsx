@@ -42,7 +42,7 @@ export function Workings({ steps, working, summary }: WorkingsProps) {
   return (
     <div className="workings">
       <h3>Steps</h3>
-      <ol className="procedure">
+      <ol className="procedure" aria-label="Steps">
         {steps.map((step) => (
           <li key={step}>{step}</li>
         ))}
