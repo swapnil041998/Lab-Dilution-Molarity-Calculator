@@ -156,7 +156,7 @@ All chemistry and unit math lives in `src/core/`, so it is fully unit-testable.
       Pages deploy workflow, this plan.
 - [x] **M2 Calculation engine:** units with unit types, molarity, dilution,
       liquid stocks, formatting, plus tests.
-- [ ] **M3 Reagent data v0:** schema, formula parser, the ~150 most-used
+- [x] **M3 Reagent data v0:** schema, formula parser, the ~150 most-used
       reagents, integrity tests.
 - [ ] **M4 v1.0 app:** core calculators, show work, warnings, procedure output,
       Quick/Learn modes; deploy.
