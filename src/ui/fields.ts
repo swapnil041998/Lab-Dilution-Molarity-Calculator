@@ -37,6 +37,8 @@ export const UNIT_LABELS: Partial<Record<UnitId, string>> = {
   '/mL': 'cells/mL',
   '/uL': 'cells/µL',
   '/L': 'cells/L',
+  // Labels and SDSs usually give density in g/mL (the same as g/cm³).
+  'g/cm3': 'g/mL',
 }
 
 /** A quantity as text for results, using the friendlier unit labels. */

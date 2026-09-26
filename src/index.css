@@ -473,6 +473,43 @@ select {
   color: var(--text);
 }
 
+@media (max-width: 600px) {
+  /* Share the width so every tab stays visible; long labels wrap. */
+  .tab-list [role='tab'] {
+    flex: 1 1 0;
+    padding: 6px 4px;
+    white-space: normal;
+    line-height: 1.2;
+    font-size: 0.95rem;
+  }
+}
+
 .result-warning {
   margin-top: 12px !important;
+}
+
+.field-row-even {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.checkbox {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.result-stock {
+  margin-bottom: 12px !important;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }

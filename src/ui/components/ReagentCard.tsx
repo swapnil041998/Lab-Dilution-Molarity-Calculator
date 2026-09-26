@@ -9,6 +9,8 @@ import {
 interface ReagentCardProps {
   readonly substance: Substance
   readonly onChange: (substance: Substance) => void
+  /** Which calculator shows the card, for advice about solids vs liquids. */
+  readonly context?: 'solid' | 'liquid'
 }
 
 function pubchemUrl(cas: string): string {
@@ -16,7 +18,11 @@ function pubchemUrl(cas: string): string {
 }
 
 /** Details of the chosen reagent: formula weight, form, safety and notes. */
-export function ReagentCard({ substance, onChange }: ReagentCardProps) {
+export function ReagentCard({
+  substance,
+  onChange,
+  context = 'solid',
+}: ReagentCardProps) {
   if (substance.kind === 'formula') {
     return (
       <section className="reagent-card" aria-label="Chosen formula">
@@ -73,12 +79,19 @@ export function ReagentCard({ substance, onChange }: ReagentCardProps) {
         </p>
       )}
 
-      {r.state !== 'solid' && (
+      {context === 'solid' && r.state !== 'solid' && (
         <p className="banner banner-info" role="note">
           Supplied as a{' '}
           {r.state === 'solution' ? 'concentrated solution' : 'liquid'}, so it
-          is usually measured by volume. A calculator for liquids is coming
-          next.
+          is usually measured by volume: use the{' '}
+          <a href="#liquid">Concentrated liquid</a> calculator.
+        </p>
+      )}
+
+      {context === 'liquid' && r.assayBasis && (
+        <p className="banner banner-info" role="note">
+          The assay is expressed {r.assayBasis}, and the molar mass is for{' '}
+          {displayFormula(r.formula)}.
         </p>
       )}
 

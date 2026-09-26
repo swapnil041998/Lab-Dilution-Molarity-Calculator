@@ -12,6 +12,9 @@ import {
 interface ReagentPickerProps {
   readonly value: Substance | undefined
   readonly onChange: (substance: Substance | undefined) => void
+  /** Reagents to search; the whole library by default. */
+  readonly library?: readonly Reagent[]
+  readonly placeholder?: string
 }
 
 type Option =
@@ -24,7 +27,12 @@ const MAX_RESULTS = 8
  * Search box for the reagent library. A query that parses as a chemical
  * formula is also offered as-is, so any compound can be used.
  */
-export function ReagentPicker({ value, onChange }: ReagentPickerProps) {
+export function ReagentPicker({
+  value,
+  onChange,
+  library = REAGENTS,
+  placeholder = 'Search by name, formula or CAS, or type a formula',
+}: ReagentPickerProps) {
   const id = useId()
   const listId = `${id}-list`
   const [query, setQuery] = useState(value ? substanceName(value) : '')
@@ -41,13 +49,13 @@ export function ReagentPicker({ value, onChange }: ReagentPickerProps) {
   const options = useMemo<Option[]>(() => {
     const trimmed = query.trim()
     if (!trimmed) return []
-    const found: Option[] = searchReagents(REAGENTS, trimmed, MAX_RESULTS).map(
+    const found: Option[] = searchReagents(library, trimmed, MAX_RESULTS).map(
       (reagent) => ({ kind: 'reagent', reagent }),
     )
     const formula = substanceFromFormula(trimmed)
     if (formula) found.push({ kind: 'formula', substance: formula })
     return found
-  }, [query])
+  }, [query, library])
 
   const choose = (option: Option) => {
     const substance: Substance =
@@ -78,7 +86,7 @@ export function ReagentPicker({ value, onChange }: ReagentPickerProps) {
           role="combobox"
           autoComplete="off"
           spellCheck={false}
-          placeholder="Search by name, formula or CAS, or type a formula"
+          placeholder={placeholder}
           value={query}
           aria-expanded={showList}
           aria-controls={listId}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from './App.tsx'
@@ -66,6 +66,25 @@ describe('App', () => {
       'aria-selected',
       'true',
     )
+  })
+
+  it('sends liquids picked on the solid tab to the liquid calculator', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const solid = screen.getByRole('tabpanel', { name: 'From a solid' })
+    await user.type(
+      within(solid).getByRole('combobox', { name: 'Reagent' }),
+      'sulfuric',
+    )
+    await user.click(screen.getByRole('option', { name: /Sulfuric acid 98%/ }))
+    await user.click(
+      within(solid).getByRole('link', { name: 'Concentrated liquid' }),
+    )
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Dilute a concentrated liquid',
+      }),
+    ).toBeVisible()
   })
 
   it('opens the calculator named in the link', () => {

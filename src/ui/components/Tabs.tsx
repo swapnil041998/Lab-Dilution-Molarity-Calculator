@@ -1,4 +1,10 @@
-import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
 
 export interface Tab {
   readonly id: string
@@ -24,6 +30,13 @@ function tabFromHash(tabs: readonly Tab[]): string {
 export function Tabs({ label, tabs }: TabsProps) {
   const [selected, setSelected] = useState(() => tabFromHash(tabs))
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
+
+  // Follow in-page links such as <a href="#liquid">.
+  useEffect(() => {
+    const onHashChange = () => setSelected(tabFromHash(tabs))
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [tabs])
 
   const select = (id: string, focus = false) => {
     setSelected(id)

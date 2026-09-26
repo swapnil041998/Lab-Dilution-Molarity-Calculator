@@ -1,4 +1,5 @@
 import { DilutionCalculator } from './ui/calculators/DilutionCalculator.tsx'
+import { LiquidCalculator } from './ui/calculators/LiquidCalculator.tsx'
 import { SolidCalculator } from './ui/calculators/SolidCalculator.tsx'
 import { Tabs, type Tab } from './ui/components/Tabs.tsx'
 
@@ -27,6 +28,20 @@ const TABS: readonly Tab[] = [
           How much stock to take, or what you end up with: C1 × V1 = C2 × V2.
         </p>
         <DilutionCalculator />
+      </>
+    ),
+  },
+  {
+    id: 'liquid',
+    label: 'Concentrated liquid',
+    content: (
+      <>
+        <h2>Dilute a concentrated liquid</h2>
+        <p className="section-intro">
+          Acids, bases and neat liquids sold as % w/w: what the bottle's
+          concentration is, and how much to take for the solution you want.
+        </p>
+        <LiquidCalculator />
       </>
     ),
   },

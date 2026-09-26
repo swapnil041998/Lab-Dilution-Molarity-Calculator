@@ -53,3 +53,12 @@ export const DILUTION_CONCENTRATION_UNITS = [
 export const SOLUTION_MASS_UNITS = [
   { units: ['kg', 'g', 'mg'] },
 ] as const satisfies readonly UnitGroup[]
+
+export const LIQUID_TARGET_UNITS = [
+  { label: 'Molar', units: ['M', 'mM', 'uM'] },
+  { label: 'Mass per volume', units: ['%w/v', 'g/L', 'mg/mL', 'mg/L', 'ppm'] },
+] as const satisfies readonly UnitGroup[]
+
+export const DENSITY_UNITS = [
+  { units: ['g/cm3', 'kg/m3'] },
+] as const satisfies readonly UnitGroup[]
