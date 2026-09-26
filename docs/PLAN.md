@@ -128,7 +128,7 @@ PubChem during compilation. A domain expert spot-checks a sample before v1.0.
 ```
 src/
   core/      pure calculation code, no UI imports
-  data/      reagents, recipes, pKa table (JSON + schema, validated in CI)
+  data/      reagents, recipes, pKa table (typed data files, validated in CI)
   ui/        components and calculator tabs
 docs/        this plan
 ```
