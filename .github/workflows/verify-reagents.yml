@@ -1,0 +1,44 @@
+name: Verify reagents against PubChem
+
+# Checks that every CAS number in the reagent library resolves on PubChem to
+# a compound with the same formula. Runs only when the library or the formula
+# code changes, since it makes one request per reagent.
+on:
+  pull_request:
+    paths:
+      - 'src/data/reagents/**'
+      - 'src/core/formula.ts'
+      - 'src/core/elements.ts'
+      - 'scripts/check-pubchem.ts'
+      - '.github/workflows/verify-reagents.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/reagents/**'
+      - 'src/core/formula.ts'
+      - 'src/core/elements.ts'
+      - 'scripts/check-pubchem.ts'
+      - '.github/workflows/verify-reagents.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-reagents-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pubchem:
+    name: PubChem cross-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      # Node 22 runs the TypeScript script directly; no dependencies needed.
+      - run: node scripts/check-pubchem.ts
