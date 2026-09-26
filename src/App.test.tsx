@@ -54,6 +54,14 @@ describe('App', () => {
     ).toBeVisible()
   })
 
+  it('opens the calibration standards calculator from a link', () => {
+    window.history.replaceState(null, '', '/#standards')
+    render(<App />)
+    expect(
+      screen.getByRole('heading', { name: 'Make calibration standards' }),
+    ).toBeVisible()
+  })
+
   it('keeps what was typed when switching tabs', async () => {
     const user = userEvent.setup()
     render(<App />)

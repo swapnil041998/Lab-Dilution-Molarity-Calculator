@@ -16,6 +16,28 @@ export function parseField(text: string): ParsedField {
   return result.ok ? { value: result.value } : { error: result.error }
 }
 
+export interface ParsedList {
+  readonly values?: readonly number[]
+  readonly error?: string
+}
+
+/** A list of numbers separated by commas, semicolons or spaces. */
+export function parseList(text: string): ParsedList {
+  const parts = text.split(/[,;\s]+/).filter((part) => part !== '')
+  if (parts.length === 0) return {}
+  const values: number[] = []
+  for (const part of parts) {
+    const result = parseNumber(part)
+    if (!result.ok) {
+      return {
+        error: `"${part}" is not a number. Separate the values with commas or spaces, and use a point for decimals (0.5).`,
+      }
+    }
+    values.push(result.value)
+  }
+  return { values }
+}
+
 /** Calculation errors that mean "not filled in yet" rather than "wrong". */
 export const INCOMPLETE = new Set(['missing-input', 'missing-molar-mass'])
 

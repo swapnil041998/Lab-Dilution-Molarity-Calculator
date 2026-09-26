@@ -94,6 +94,33 @@ export function volumeAdvice(volume: Quantity<'volume'>): Advice {
   }
 }
 
+/** Class A volumetric (bulb) pipette sizes, in mL. */
+const VOLUMETRIC_PIPETTES = [1, 2, 5, 10, 20, 25, 50, 100]
+
+/**
+ * The tool to measure a volume with, as a short name for a table: "P200",
+ * "10 mL volumetric pipette", "100 mL measuring cylinder". Undefined when
+ * the volume is too small to pipette.
+ */
+export function measuringTool(volume: Quantity<'volume'>): string | undefined {
+  const v = volume.value
+  if (v < MIN_PIPETTE_VOLUME) return undefined
+  const mL = v / ML
+  const volumetric = VOLUMETRIC_PIPETTES.find(
+    (size) => Math.abs(mL - size) <= 1e-9 * size,
+  )
+  if (volumetric !== undefined) return `${volumetric} mL volumetric pipette`
+  const pipette = PIPETTES.find((p) => v <= p.max * (1 + 1e-9))
+  if (pipette) return pipette.name
+  const serological = SEROLOGICAL.find((size) => mL <= size)
+  if (serological) return `${serological} mL pipette`
+  const cylinder = CYLINDERS.find((size) => mL <= size)
+  if (cylinder) {
+    return `${cylinder >= 1000 ? `${cylinder / 1000} L` : `${cylinder} mL`} measuring cylinder`
+  }
+  return 'measuring cylinder, in portions'
+}
+
 export interface BalanceSettings {
   /** Smallest mass to weigh on the analytical balance, in g. */
   readonly minimumMass: number

@@ -83,3 +83,24 @@ export const SERIAL_CONCENTRATION_UNITS = [
   { label: 'Stocks and fractions', units: ['x', '%v/v'] },
   { label: 'Activity and counts', units: ['U/mL', 'IU/mL', '/mL'] },
 ] as const satisfies readonly UnitGroup[]
+
+/** Calibration standards: stocks are usually mg/L (ppm), standards µg/L. */
+export const STANDARD_CONCENTRATION_UNITS = [
+  { label: 'Molar', units: ['M', 'mM', 'uM', 'nM', 'pM'] },
+  {
+    label: 'Mass per volume',
+    units: [
+      'g/L',
+      'mg/L',
+      'ug/L',
+      'ng/L',
+      'ppm',
+      'ppb',
+      'mg/mL',
+      'ug/mL',
+      'ng/mL',
+      '%w/v',
+    ],
+  },
+  { label: 'Activity and counts', units: ['U/mL', 'IU/mL', '/mL'] },
+] as const satisfies readonly UnitGroup[]

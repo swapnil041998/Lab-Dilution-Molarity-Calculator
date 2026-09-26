@@ -15,6 +15,8 @@ interface QuantityFieldProps<U extends UnitId> {
   /** Shown under the field when there is no error. */
   readonly hint?: string
   readonly placeholder?: string
+  /** "text" for input that is not a single number, such as a list. */
+  readonly inputMode?: 'decimal' | 'text'
 }
 
 /** A number with a unit picker, e.g. "500" + "mL". */
@@ -29,6 +31,7 @@ export function QuantityField<U extends UnitId>({
   error,
   hint,
   placeholder,
+  inputMode = 'decimal',
 }: QuantityFieldProps<U>) {
   const messageId = `${id}-message`
   const message = error ?? hint
@@ -39,7 +42,7 @@ export function QuantityField<U extends UnitId>({
         <input
           id={id}
           type="text"
-          inputMode="decimal"
+          inputMode={inputMode}
           autoComplete="off"
           spellCheck={false}
           value={value}

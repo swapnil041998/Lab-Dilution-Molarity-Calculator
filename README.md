@@ -11,10 +11,11 @@ dilutions, calibration standards, recipes and buffers (v1.1). See
 
 ## What it does
 
-- **Four calculators:**
+- **Five calculators:**
   - **From a solid:** how much to weigh.
   - **Dilution:** C1·V1 = C2·V2, for any concentration unit (M, mg/mL, ×, %, U/mL, cells/mL).
   - **Serial dilution:** 2-fold, 10-fold, half-log or any factor, with the same volume in every tube, and a table of each tube's dilution and concentration.
+  - **Calibration standards:** a set of standards made directly from one stock, through an intermediate standard for the lowest ones when needed.
   - **Concentrated liquid:** for reagents such as 37% HCl.
 - **A library of 232 reagents** across nine fields. Each has its formula weight, the
   forms it comes in (anhydrous or hydrates), CAS number, density and assay for

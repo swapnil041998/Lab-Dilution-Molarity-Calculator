@@ -9,6 +9,20 @@ function tab(page: Page, name: string) {
   return page.getByRole('tab', { name, exact: true })
 }
 
+/**
+ * No sideways scrolling. Compares with the device's own width: an emulated
+ * phone widens its layout to fit content that is too wide, so the page's
+ * own innerWidth would hide the problem.
+ */
+async function expectFitsScreen(page: Page) {
+  const scrollWidth = await page.evaluate(
+    () => document.documentElement.scrollWidth,
+  )
+  expect(scrollWidth, 'no sideways scrolling').toBeLessThanOrEqual(
+    page.viewportSize()!.width,
+  )
+}
+
 /** Runs axe on part of the page and expects no violations at all. */
 async function expectAccessible(page: Page, selector: string) {
   const scan = await new AxeBuilder({ page }).include(selector).analyze()
@@ -113,7 +127,38 @@ test('plans a tenfold serial dilution', async ({ page }) => {
   const rows = result.getByRole('table', { name: 'Tubes' }).getByRole('row')
   await expect(rows).toHaveCount(7)
   await expect(rows.last()).toContainText('10 nM')
+  await expectFitsScreen(page)
   await expectAccessible(page, '#panel-serial')
+})
+
+test('plans calibration standards through an intermediate', async ({
+  page,
+}) => {
+  await page.goto('/#standards')
+  const standards = panel(page, 'Calibration standards')
+  await standards
+    .getByRole('textbox', { name: 'Stock concentration' })
+    .fill('1000')
+  await standards
+    .getByRole('combobox', { name: 'Standard concentrations unit' })
+    .selectOption('ug/L')
+  await standards
+    .getByRole('textbox', { name: 'Standard concentrations' })
+    .fill('0, 1, 5, 10, 50, 100')
+  await standards
+    .getByRole('textbox', { name: 'Volume of each standard' })
+    .fill('100')
+
+  const result = standards.getByRole('region', { name: 'Result' })
+  await expect(result).toContainText('Make 6 standards of 100 mL')
+  await expect(result.getByRole('list', { name: 'Steps' })).toContainText(
+    'Make the intermediate standard',
+  )
+  await expect(
+    result.getByRole('table', { name: 'Standards' }).getByRole('row'),
+  ).toHaveCount(7)
+  await expectFitsScreen(page)
+  await expectAccessible(page, '#panel-standards')
 })
 
 test('remembers Learn mode across visits', async ({ page }) => {
@@ -128,12 +173,15 @@ test('remembers Learn mode across visits', async ({ page }) => {
   await expect(page.getByRole('radio', { name: 'Learn' })).toBeChecked()
 })
 
-for (const [id, name] of [
+const TABS = [
   ['solid', 'From a solid'],
   ['dilution', 'Dilution'],
   ['serial', 'Serial dilution'],
+  ['standards', 'Calibration standards'],
   ['liquid', 'Concentrated liquid'],
-] as const) {
+] as const
+
+for (const [id, name] of TABS) {
   test(`${name} fits the screen and passes an accessibility scan`, async ({
     page,
   }) => {
@@ -141,15 +189,58 @@ for (const [id, name] of [
     await page.getByRole('radio', { name: 'Learn' }).check()
     await expect(panel(page, name)).toBeVisible()
 
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth,
-    )
-    expect(overflow, 'no sideways scrolling').toBeLessThanOrEqual(0)
+    await expectFitsScreen(page)
 
     await expectAccessible(page, `#panel-${id}`)
     await expectAccessible(page, 'header')
   })
 }
+
+test.describe('small phone', () => {
+  test.use({
+    viewport: { width: 320, height: 640 },
+    isMobile: true,
+    hasTouch: true,
+  })
+
+  for (const [id, name] of TABS) {
+    test(`${name} fits a 320 px screen`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== 'phone', 'phone layout only')
+      await page.goto(`/#${id}`)
+      await page.getByRole('radio', { name: 'Learn' }).check()
+      await expect(panel(page, name)).toBeVisible()
+      await expectFitsScreen(page)
+    })
+  }
+
+  test('a wide table scrolls inside the result, not the page', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'phone', 'phone layout only')
+    await page.goto('/#standards')
+    const standards = panel(page, 'Calibration standards')
+    await standards
+      .getByRole('combobox', { name: 'Stock concentration unit' })
+      .selectOption('mg/mL')
+    await standards
+      .getByRole('combobox', { name: 'Standard concentrations unit' })
+      .selectOption('ug/mL')
+    await standards
+      .getByRole('textbox', { name: 'Stock concentration' })
+      .fill('2')
+    await standards
+      .getByRole('textbox', { name: 'Standard concentrations' })
+      .fill('0, 25, 125, 250, 500, 750, 1000, 1500, 2000')
+    await standards
+      .getByRole('textbox', { name: 'Volume of each standard' })
+      .fill('1')
+    await expect(
+      standards.getByRole('columnheader', { name: 'Diluent' }),
+    ).toBeVisible()
+    await expectFitsScreen(page)
+    await expectAccessible(page, '#panel-standards')
+  })
+})
 
 test.describe('dark mode', () => {
   test.use({ colorScheme: 'dark' })

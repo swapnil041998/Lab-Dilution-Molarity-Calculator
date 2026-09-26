@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { massAdvice, planTwoStepDilution, volumeAdvice } from './bench.ts'
+import {
+  massAdvice,
+  measuringTool,
+  planTwoStepDilution,
+  volumeAdvice,
+} from './bench.ts'
 import { formatQuantity } from './format.ts'
 import { quantity } from './units.ts'
 
@@ -144,5 +149,24 @@ describe('planTwoStepDilution', () => {
         finalVolume: quantity(1, 'mL'),
       }),
     ).toBeUndefined()
+  })
+})
+
+describe('measuringTool', () => {
+  it.each([
+    [0.1, 'uL', undefined],
+    [1.5, 'uL', 'P2'],
+    [12.5, 'uL', 'P20'],
+    [100, 'uL', 'P200'],
+    [500, 'uL', 'P1000'],
+    [1, 'mL', '1 mL volumetric pipette'],
+    [2.5, 'mL', 'P5000'],
+    [10, 'mL', '10 mL volumetric pipette'],
+    [7, 'mL', '10 mL pipette'],
+    [12, 'mL', '25 mL pipette'],
+    [80, 'mL', '100 mL measuring cylinder'],
+    [1.5, 'L', '2 L measuring cylinder'],
+  ] as const)('%d %s → %s', (value, unit, tool) => {
+    expect(measuringTool(quantity(value, unit))).toBe(tool)
   })
 })

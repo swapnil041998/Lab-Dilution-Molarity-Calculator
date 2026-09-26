@@ -169,8 +169,14 @@ select {
 
 .calculator {
   display: grid;
+  /* One column as wide as the screen; wide content wraps or scrolls inside. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   margin-top: 16px;
+}
+
+.calculator > * {
+  min-width: 0;
 }
 
 @media (min-width: 820px) {
@@ -303,6 +309,9 @@ select {
   text-align: center;
   cursor: pointer;
   font-weight: 500;
+  /* Long words such as "Concentration" wrap on very small screens. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .segmented-options label.selected {
@@ -740,11 +749,15 @@ select {
   margin-bottom: 6px;
 }
 
-/* Serial dilution table */
+/* Result tables (serial dilutions, calibration standards) */
+
+.table-scroll {
+  margin-top: 16px;
+  overflow-x: auto;
+}
 
 .series-table {
   width: 100%;
-  margin-top: 16px;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
@@ -770,4 +783,15 @@ select {
 
 .series-table tbody th {
   font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .result {
+    padding: 16px 12px;
+  }
+
+  .series-table th,
+  .series-table td {
+    padding: 6px 4px;
+  }
 }

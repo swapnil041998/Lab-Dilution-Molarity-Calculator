@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DilutionCalculator } from './ui/calculators/DilutionCalculator.tsx'
 import { LiquidCalculator } from './ui/calculators/LiquidCalculator.tsx'
 import { SerialCalculator } from './ui/calculators/SerialCalculator.tsx'
+import { StandardsCalculator } from './ui/calculators/StandardsCalculator.tsx'
 import { SolidCalculator } from './ui/calculators/SolidCalculator.tsx'
 import { LearnPanel } from './ui/components/LearnPanel.tsx'
 import { ModeSwitch } from './ui/components/ModeSwitch.tsx'
@@ -84,6 +85,33 @@ const TABS: readonly Tab[] = [
           ]}
         />
         <SerialCalculator />
+      </>
+    ),
+  },
+  {
+    id: 'standards',
+    label: 'Calibration standards',
+    content: (
+      <>
+        <h2>Make calibration standards</h2>
+        <p className="section-intro">
+          Standards at the concentrations you choose, each made directly from
+          one stock. The lowest go through an intermediate standard when they
+          would need too little stock to pipette accurately.
+        </p>
+        <LearnPanel
+          ideas={[
+            'Each standard is made separately from the stock (or one intermediate), so an error in one does not carry into the others, unlike a serial dilution.',
+            'Volume of stock for each standard = standard concentration × final volume ÷ stock concentration.',
+            'Make the standards in the same diluent as your samples (the same matrix, for example the same acid strength for metals), so they behave the same in the instrument.',
+          ]}
+          mistakes={[
+            'Pipetting tiny volumes of a concentrated stock, which makes the lowest standards the least accurate. Use an intermediate standard instead.',
+            'Leaving out the blank (0), which most methods need to set or check the baseline.',
+            'Mixing units: a 1000 ppm stock is 1000 mg/L, so a 10 µg/L standard is a 1 in 100 000 dilution.',
+          ]}
+        />
+        <StandardsCalculator />
       </>
     ),
   },

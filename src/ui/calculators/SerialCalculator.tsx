@@ -13,6 +13,7 @@ import { BenchNotes } from '../components/BenchNotes.tsx'
 import { NumberField } from '../components/NumberField.tsx'
 import { QuantityField } from '../components/QuantityField.tsx'
 import { ResultSection } from '../components/ResultSection.tsx'
+import { ResultTable } from '../components/ResultTable.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
 import { Workings } from '../components/Workings.tsx'
 import {
@@ -395,8 +396,7 @@ function SerialResult({
           {keepTogether(d)}
         </p>
       ))}
-      <table className="series-table">
-        <caption>Tubes</caption>
+      <ResultTable caption="Tubes">
         <thead>
           <tr>
             <th scope="col">Tube</th>
@@ -415,7 +415,7 @@ function SerialResult({
             </tr>
           ))}
         </tbody>
-      </table>
+      </ResultTable>
       <BenchNotes advice={[...equipment, ...issues]} />
       <Workings
         steps={serialProcedure(explain)}

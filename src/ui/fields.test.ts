@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { inSentence, joinAnd, keepTogether, parseField } from './fields.ts'
+import {
+  inSentence,
+  joinAnd,
+  keepTogether,
+  parseField,
+  parseList,
+} from './fields.ts'
 
 describe('inSentence', () => {
   it.each([
@@ -61,5 +67,22 @@ describe('keepTogether', () => {
 
   it('leaves other spaces alone', () => {
     expect(keepTogether('Mix well by inverting')).toBe('Mix well by inverting')
+  })
+})
+
+describe('parseList', () => {
+  it('reads commas, semicolons and spaces', () => {
+    expect(parseList('0, 1, 2.5;5 10\n20')).toEqual({
+      values: [0, 1, 2.5, 5, 10, 20],
+    })
+    expect(parseList('1e-3, 5')).toEqual({ values: [0.001, 5] })
+  })
+
+  it('treats an empty list as not entered yet', () => {
+    expect(parseList('  ')).toEqual({})
+  })
+
+  it('names the part that is not a number', () => {
+    expect(parseList('1, two, 3').error).toMatch(/^"two" is not a number/)
   })
 })
