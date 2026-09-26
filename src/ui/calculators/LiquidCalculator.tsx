@@ -13,6 +13,7 @@ import { QuantityField } from '../components/QuantityField.tsx'
 import { ReagentCard } from '../components/ReagentCard.tsx'
 import { BenchNotes } from '../components/BenchNotes.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
+import { ResultSection } from '../components/ResultSection.tsx'
 import { Workings } from '../components/Workings.tsx'
 import { liquidProcedure, liquidWorking } from '../explain/liquid.ts'
 import { twoStepProcedure } from '../explain/twoStep.ts'
@@ -20,6 +21,7 @@ import {
   INCOMPLETE,
   inSentence,
   joinAnd,
+  keepTogether,
   parseField,
   quantityText,
   type ParsedField,
@@ -146,6 +148,16 @@ export function LiquidCalculator() {
   const reagent = substance?.kind === 'reagent' ? substance.reagent : undefined
   const name = substance ? inSentence(substanceName(substance)) : undefined
 
+  // One line for screen readers: the answer, or what to fix.
+  const status =
+    Object.keys(fieldErrors).length > 0
+      ? 'Fix the highlighted fields.'
+      : prompt || !result
+        ? (prompt ?? '')
+        : !result.ok
+          ? result.error.message
+          : `Take ${quantityText(result.value.dilution.v1)} of ${name ?? 'the stock'}`
+
   return (
     <div className="calculator">
       <div className="calculator-inputs">
@@ -254,7 +266,7 @@ export function LiquidCalculator() {
         </label>
       </div>
 
-      <section className="result" aria-label="Result" aria-live="polite">
+      <ResultSection status={status}>
         {stock?.ok && <StockLine stock={stock.value} name={name} />}
         {Object.keys(fieldErrors).length > 0 ? (
           <p className="result-prompt">Fix the highlighted fields.</p>
@@ -288,7 +300,7 @@ export function LiquidCalculator() {
             addToWater={addToWater}
           />
         )}
-      </section>
+      </ResultSection>
     </div>
   )
 }
@@ -370,13 +382,15 @@ function LiquidResult({
         Take <strong>{take}</strong> of {name ?? 'the stock'}
       </p>
       <p className="result-detail">
-        {safety
-          ? `Add it slowly to about half the final volume of water, let it cool, then bring to ${finalVolume}.`
-          : `Add it to part of the water, then bring to ${finalVolume} (about ${diluent} of water).`}{' '}
-        This gives {target}.
+        {keepTogether(
+          safety
+            ? `Add it slowly to about half the final volume of water, let it cool, then bring to ${finalVolume}.`
+            : `Add it to part of the water, then bring to ${finalVolume} (about ${diluent} of water).`,
+        )}{' '}
+        This gives {keepTogether(target)}.
       </p>
       <p className="result-detail">
-        Or weigh {weight} instead of measuring the volume.
+        Or weigh {keepTogether(weight)} instead of measuring the volume.
       </p>
       {safety && (
         <p className="banner banner-danger result-warning" role="note">

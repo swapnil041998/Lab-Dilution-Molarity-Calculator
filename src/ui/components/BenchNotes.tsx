@@ -1,4 +1,5 @@
 import type { Advice } from '../../core/bench.ts'
+import { keepTogether } from '../fields.ts'
 
 interface BenchNotesProps {
   /** Equipment advice for each amount to measure. */
@@ -16,14 +17,14 @@ export function BenchNotes({ advice, remedy }: BenchNotesProps) {
       {tools.length > 0 && (
         <ul className="bench-advice" aria-label="Equipment">
           {tools.map((text) => (
-            <li key={text}>{text}</li>
+            <li key={text}>{keepTogether(text)}</li>
           ))}
         </ul>
       )}
       {issues.map((issue) => (
         <p key={issue.code} className="banner banner-warning" role="note">
-          {issue.message}
-          {remedy && ` ${remedy}`}
+          {keepTogether(issue.message)}
+          {remedy && ` ${keepTogether(remedy)}`}
         </p>
       ))}
     </div>

@@ -9,6 +9,7 @@ import { formatNumber } from '../../core/format.ts'
 import type { CalcIssue, CalcResult } from '../../core/result.ts'
 import { UNITS, quantity, type Kind, type UnitId } from '../../core/units.ts'
 import { QuantityField } from '../components/QuantityField.tsx'
+import { ResultSection } from '../components/ResultSection.tsx'
 import { BenchNotes } from '../components/BenchNotes.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
 import { Workings } from '../components/Workings.tsx'
@@ -21,6 +22,7 @@ import { twoStepProcedure } from '../explain/twoStep.ts'
 import {
   INCOMPLETE,
   joinAnd,
+  keepTogether,
   parseField,
   quantityText,
   type ParsedField,
@@ -152,6 +154,21 @@ export function DilutionCalculator() {
     }
   }
 
+  // One line for screen readers: the answer, or what to fix.
+  const status =
+    Object.keys(fieldErrors).length > 0
+      ? 'Fix the highlighted fields.'
+      : prompt || !result
+        ? (prompt ?? '')
+        : !result.ok
+          ? result.error.message
+          : {
+              v1: `Take ${quantityText(result.value.v1)} of stock`,
+              v2: `Make up to ${quantityText(result.value.v2)}`,
+              c2: `Final concentration ${quantityText(result.value.c2)}`,
+              c1: `Stock concentration ${quantityText(result.value.c1)}`,
+            }[solveFor]
+
   const sizeLabel = byMass ? 'mass' : 'volume'
   const fields: Record<SolveFor, ReactNode> = {
     c1: (
@@ -248,7 +265,7 @@ export function DilutionCalculator() {
         )}
       </div>
 
-      <section className="result" aria-label="Result" aria-live="polite">
+      <ResultSection status={status}>
         {Object.keys(fieldErrors).length > 0 ? (
           <p className="result-prompt">Fix the highlighted fields.</p>
         ) : prompt || !result ? (
@@ -278,7 +295,7 @@ export function DilutionCalculator() {
             }
           />
         )}
-      </section>
+      </ResultSection>
     </div>
   )
 }
@@ -369,7 +386,7 @@ function DilutionResult({
       <p className="result-headline">{headline[solveFor]}</p>
       {details.map((d) => (
         <p key={d} className="result-detail">
-          {d}
+          {keepTogether(d)}
         </p>
       ))}
       {warnings.map((w) => (

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { keepTogether } from '../fields.ts'
+import { useMode } from '../mode.ts'
 import {
   lineText,
   num,
@@ -20,6 +22,7 @@ interface WorkingsProps {
 /** Bench steps, the working behind the answer, and a copy button. */
 export function Workings({ steps, working, summary }: WorkingsProps) {
   const [copied, setCopied] = useState(false)
+  const learn = useMode() === 'learn'
 
   const copy = async () => {
     const text = [
@@ -44,20 +47,26 @@ export function Workings({ steps, working, summary }: WorkingsProps) {
       <h3>Steps</h3>
       <ol className="procedure" aria-label="Steps">
         {steps.map((step) => (
-          <li key={step}>{step}</li>
+          <li key={step}>{keepTogether(step)}</li>
         ))}
       </ol>
-      <details className="show-working">
+      <details className="show-working" open={learn}>
         <summary>Show working</summary>
         <div className="working-lines">
           {working.map((line, i) =>
             line.kind === 'text' ? (
               <p key={i} className="work-line">
-                {line.text}
+                {keepTogether(line.text)}
               </p>
             ) : (
               <ChainView key={i} chain={line.chain} />
             ),
+          )}
+          {learn && (
+            <p className="work-note">
+              Numbers are shown to 4 significant figures. Round your final
+              answer to match your least precise measurement.
+            </p>
           )}
         </div>
       </details>

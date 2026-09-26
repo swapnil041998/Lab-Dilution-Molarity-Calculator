@@ -70,3 +70,16 @@ export function quantityText(
   const label = UNIT_LABELS[f.unit]
   return label ? `${f.number} ${label}` : f.text
 }
+
+const NBSP = '\u00a0'
+
+/**
+ * Keeps a number on the same line as its unit or "× 10ⁿ" when text wraps:
+ * "1 M" never breaks as "1 / M". For display only; copied text keeps plain
+ * spaces.
+ */
+export function keepTogether(text: string): string {
+  return text
+    .replace(/(\d) × 10/g, `$1${NBSP}×${NBSP}10`)
+    .replace(/([\d⁰¹²³⁴⁵⁶⁷⁸⁹]) (?=[A-Za-zµ%×/°]|cells)/g, `$1${NBSP}`)
+}

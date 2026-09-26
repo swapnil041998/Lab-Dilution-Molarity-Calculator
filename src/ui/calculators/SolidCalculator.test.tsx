@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { SolidCalculator } from './SolidCalculator.tsx'
 
+/** Text with the display-only non-breaking spaces made plain. */
+function plainText(el: Element): string {
+  return (el.textContent ?? '').replace(/\u00a0/g, ' ')
+}
+
 function setup() {
   const user = userEvent.setup()
   render(<SolidCalculator />)
@@ -45,7 +50,7 @@ describe('SolidCalculator', () => {
     const steps = within(
       within(result()).getByRole('list', { name: 'Steps' }),
     ).getAllByRole('listitem')
-    expect(steps.map((s) => s.textContent)).toEqual([
+    expect(steps.map(plainText)).toEqual([
       'Weigh 29.22 g of sodium chloride.',
       'Dissolve it in about 400 mL of water (about 80% of the final volume).',
       'Transfer to a 500 mL volumetric flask or measuring cylinder and bring to 500 mL with water.',

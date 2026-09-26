@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { DilutionCalculator } from './DilutionCalculator.tsx'
 
+/** Text with the display-only non-breaking spaces made plain. */
+function plainText(el: Element): string {
+  return (el.textContent ?? '').replace(/\u00a0/g, ' ')
+}
+
 function setup() {
   const user = userEvent.setup()
   render(<DilutionCalculator />)
@@ -40,7 +45,7 @@ describe('DilutionCalculator', () => {
     expect(
       within(within(result()).getByRole('list', { name: 'Steps' }))
         .getAllByRole('listitem')
-        .map((s) => s.textContent),
+        .map(plainText),
     ).toEqual([
       'Put about 7.9 mL of diluent in a 10 mL volumetric flask or tube.',
       'Add 100 µL of the 10 mM stock.',
@@ -72,7 +77,7 @@ describe('DilutionCalculator', () => {
     expect(result()).toHaveTextContent('Dilution factor 1 × 10⁶.')
     const steps = within(within(result()).getByRole('list', { name: 'Steps' }))
       .getAllByRole('listitem')
-      .map((s) => s.textContent)
+      .map(plainText)
     expect(steps).toEqual([
       'Make the intermediate: put 9.99 mL of diluent in a tube, add 10 µL of the 10 mM stock and mix well. This gives 10 mL of 10 µM (1 in 1000).',
       'Put about 7.99 mL of diluent in a 10 mL volumetric flask or tube and add 10 µL of the intermediate (1 in 1000).',

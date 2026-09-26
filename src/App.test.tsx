@@ -6,6 +6,7 @@ import App from './App.tsx'
 
 afterEach(() => {
   window.history.replaceState(null, '', '/')
+  window.localStorage.clear()
 })
 
 describe('App', () => {
@@ -85,6 +86,78 @@ describe('App', () => {
         name: 'Dilute a concentrated liquid',
       }),
     ).toBeVisible()
+  })
+
+  it('starts in Quick mode without explanations', () => {
+    render(<App />)
+    expect(screen.getByRole('radio', { name: 'Quick' })).toBeChecked()
+    expect(
+      screen.queryByRole('complementary', { name: 'How it works' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('Learn mode explains each calculator and opens the working', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('radio', { name: 'Learn' }))
+
+    const solid = screen.getByRole('tabpanel', { name: 'From a solid' })
+    const learn = within(solid).getByRole('complementary', {
+      name: 'How it works',
+    })
+    expect(learn).toHaveTextContent('Molarity (M) is moles of solute per litre')
+    expect(learn).toHaveTextContent('Common mistakes')
+
+    await user.type(
+      within(solid).getByRole('combobox', { name: 'Reagent' }),
+      'NaCl',
+    )
+    await user.click(screen.getByRole('option', { name: /^Sodium chloride/ }))
+    await user.type(
+      within(solid).getByRole('textbox', { name: 'Concentration' }),
+      '1',
+    )
+    await user.type(
+      within(solid).getByRole('textbox', { name: 'Final volume' }),
+      '500',
+    )
+    const details = solid.querySelector('details.show-working')!
+    expect(details).toHaveAttribute('open')
+    expect(solid).toHaveTextContent('4 significant figures')
+  })
+
+  it('remembers Learn mode', async () => {
+    const user = userEvent.setup()
+    const { unmount } = render(<App />)
+    await user.click(screen.getByRole('radio', { name: 'Learn' }))
+    unmount()
+    render(<App />)
+    expect(screen.getByRole('radio', { name: 'Learn' })).toBeChecked()
+  })
+
+  it('announces the answer in one line for screen readers', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const solid = screen.getByRole('tabpanel', { name: 'From a solid' })
+    const status = within(solid)
+      .getByRole('region', { name: 'Result' })
+      .querySelector('[aria-live]')!
+    expect(status).toHaveTextContent(
+      'Enter the concentration and final volume to work out the mass to weigh.',
+    )
+    await user.type(
+      within(solid).getByRole('textbox', { name: 'Concentration' }),
+      '10',
+    )
+    await user.selectOptions(
+      within(solid).getByRole('combobox', { name: 'Concentration unit' }),
+      '%w/v',
+    )
+    await user.type(
+      within(solid).getByRole('textbox', { name: 'Final volume' }),
+      '100',
+    )
+    expect(status).toHaveTextContent('Weigh 10 g')
   })
 
   it('opens the calculator named in the link', () => {

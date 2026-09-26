@@ -10,12 +10,14 @@ import {
   INCOMPLETE,
   inSentence,
   joinAnd,
+  keepTogether,
   parseField,
   quantityText,
   type ParsedField,
 } from '../fields.ts'
 import { ReagentCard } from '../components/ReagentCard.tsx'
 import { ReagentPicker } from '../components/ReagentPicker.tsx'
+import { ResultSection } from '../components/ResultSection.tsx'
 import { BenchNotes } from '../components/BenchNotes.tsx'
 import { SegmentedControl } from '../components/SegmentedControl.tsx'
 import { Workings } from '../components/Workings.tsx'
@@ -278,11 +280,15 @@ function Result({
   units,
 }: ResultProps) {
   let body: ReactNode
+  let status: string
   if (hasFieldErrors) {
-    body = <p className="result-prompt">Fix the highlighted fields.</p>
+    status = 'Fix the highlighted fields.'
+    body = <p className="result-prompt">{status}</p>
   } else if (prompt || !result) {
+    status = prompt ?? ''
     body = <p className="result-prompt">{prompt}</p>
   } else if (!result.ok) {
+    status = result.error.message
     body = (
       <p
         className={
@@ -293,6 +299,12 @@ function Result({
       </p>
     )
   } else {
+    const solution = result.value
+    status = {
+      mass: `Weigh ${quantityText(solution.mass)}`,
+      volume: `Final volume ${quantityText(solution.volume)}`,
+      concentration: `Concentration ${quantityText(solution.concentration)}`,
+    }[solveFor]
     body = (
       <SolidResult
         solveFor={solveFor}
@@ -303,11 +315,7 @@ function Result({
       />
     )
   }
-  return (
-    <section className="result" aria-label="Result" aria-live="polite">
-      {body}
-    </section>
-  )
+  return <ResultSection status={status}>{body}</ResultSection>
 }
 
 function SolidResult({
@@ -398,7 +406,7 @@ function SolidResult({
       <p className="result-headline">{headline}</p>
       {details.map((d) => (
         <p key={d} className="result-detail">
-          {d}
+          {keepTogether(d)}
         </p>
       ))}
       <BenchNotes advice={[weighing]} {...(remedy && { remedy })} />

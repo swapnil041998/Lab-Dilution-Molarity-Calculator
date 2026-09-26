@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { LiquidCalculator } from './LiquidCalculator.tsx'
 
+/** Text with the display-only non-breaking spaces made plain. */
+function plainText(el: Element): string {
+  return (el.textContent ?? '').replace(/\u00a0/g, ' ')
+}
+
 function setup() {
   const user = userEvent.setup()
   render(<LiquidCalculator />)
@@ -43,7 +48,7 @@ describe('LiquidCalculator', () => {
 
     const steps = within(within(result()).getByRole('list', { name: 'Steps' }))
       .getAllByRole('listitem')
-      .map((s) => s.textContent)
+      .map(plainText)
     expect(steps[0]).toMatch(/fume hood/)
     expect(steps).toContain(
       'Measure 83.51 mL of hydrochloric acid 37% (or weigh 98.54 g).',
@@ -71,7 +76,7 @@ describe('LiquidCalculator', () => {
     await user.type(textbox('Final volume'), '1')
     const steps = within(screen.getByRole('list', { name: 'Steps' }))
       .getAllByRole('listitem')
-      .map((s) => s.textContent)
+      .map(plainText)
     expect(steps[0]).toBe(
       'Make the intermediate: put 9.99 mL of water in a tube, add 10 µL of β-mercaptoethanol and mix well. This gives 10 mL of 14.26 mM (1 in 1000).',
     )
