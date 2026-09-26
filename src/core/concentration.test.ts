@@ -56,6 +56,55 @@ describe('convertConcentration', () => {
   })
 })
 
+describe('convertConcentration: density bridges', () => {
+  it('37% w/w HCl (1.19 g/mL, 36.46 g/mol) is about 12.08 M', () => {
+    const result = convertConcentration(
+      quantity(37, '%w/w'),
+      'molarConcentration',
+      {
+        molarMass: quantity(36.46, 'g/mol'),
+        solutionDensity: quantity(1.19, 'g/cm3'),
+      },
+    )
+    expect(result.ok && toUnit(result.value, 'M')).toBeCloseTo(12.076, 3)
+  })
+
+  it('70% v/v ethanol (pure ethanol 0.789 g/mL) is 552.3 g/L', () => {
+    const result = convertConcentration(
+      quantity(70, '%v/v'),
+      'massConcentration',
+      { soluteDensity: quantity(0.789, 'g/cm3') },
+    )
+    expect(result.ok && toUnit(result.value, 'g/L')).toBeCloseTo(552.3, 10)
+  })
+
+  it('converts back from mass concentration to w/w', () => {
+    const result = convertConcentration(
+      quantity(440.3, 'g/L'),
+      'massFraction',
+      { solutionDensity: quantity(1.19, 'g/cm3') },
+    )
+    expect(result.ok && toUnit(result.value, '%w/w')).toBeCloseTo(37, 10)
+  })
+
+  it('names the missing density', () => {
+    const ww = convertConcentration(quantity(37, '%w/w'), 'massConcentration')
+    expect(!ww.ok && ww.error.code).toBe('missing-solution-density')
+    expect(!ww.ok && ww.error.field).toBe('solutionDensity')
+    const vv = convertConcentration(quantity(70, '%v/v'), 'massConcentration')
+    expect(!vv.ok && vv.error.code).toBe('missing-solute-density')
+  })
+
+  it('needs both bridges from w/w to molar', () => {
+    const result = convertConcentration(
+      quantity(37, '%w/w'),
+      'molarConcentration',
+      { solutionDensity: quantity(1.19, 'g/cm3') },
+    )
+    expect(!result.ok && result.error.code).toBe('missing-molar-mass')
+  })
+})
+
 describe('concentration kinds', () => {
   it('knows which kinds are concentrations', () => {
     expect(isConcentrationKind('molarConcentration')).toBe(true)

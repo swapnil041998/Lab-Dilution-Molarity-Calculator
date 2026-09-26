@@ -154,7 +154,7 @@ All chemistry and unit math lives in `src/core/`, so it is fully unit-testable.
 
 - [x] **M1 Project setup:** Vite/React/TS scaffold, lint, format, tests, CI,
       Pages deploy workflow, this plan.
-- [ ] **M2 Calculation engine:** units with unit types, molarity, dilution,
+- [x] **M2 Calculation engine:** units with unit types, molarity, dilution,
       liquid stocks, formatting, plus tests.
 - [ ] **M3 Reagent data v0:** schema, formula parser, the ~150 most-used
       reagents, integrity tests.
