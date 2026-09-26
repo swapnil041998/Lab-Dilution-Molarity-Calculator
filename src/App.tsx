@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BufferCalculator } from './ui/calculators/BufferCalculator.tsx'
 import { DilutionCalculator } from './ui/calculators/DilutionCalculator.tsx'
 import { LiquidCalculator } from './ui/calculators/LiquidCalculator.tsx'
 import { SerialCalculator } from './ui/calculators/SerialCalculator.tsx'
@@ -138,6 +139,32 @@ const TABS: readonly Tab[] = [
           ]}
         />
         <LiquidCalculator />
+      </>
+    ),
+  },
+  {
+    id: 'buffer',
+    label: 'Buffer',
+    content: (
+      <>
+        <h2>Make a buffer</h2>
+        <p className="section-intro">
+          How much of each form, or how much acid or base, gives the pH you
+          want. It corrects the pKa for temperature and ionic strength.
+        </p>
+        <LearnPanel
+          ideas={[
+            'A buffer resists pH change best within about 1 unit of its pKa, where useful amounts of both the acid and base forms are present.',
+            'Henderson–Hasselbalch: pH = pKa + log(base ÷ acid). At pH = pKa the two forms are equal.',
+            "pKa values shift with temperature (Tris by about −0.03 per °C) and with ionic strength (phosphate's pKa2 is about 6.8 in a 0.1 M buffer, not 7.2). The calculator corrects for both, but always finish with a calibrated pH meter.",
+          ]}
+          mistakes={[
+            'Setting the pH at room temperature and using the buffer cold or warm: Tris set to pH 8.0 at 25 °C is about pH 8.6 at 4 °C.',
+            'Bringing to the final volume before adjusting the pH, or overshooting and adding acid and base back and forth, which adds salt.',
+            'Using the formula weight of the wrong hydrate, e.g. Na₂HPO₄ (141.96) instead of Na₂HPO₄·7H₂O (268.07).',
+          ]}
+        />
+        <BufferCalculator />
       </>
     ),
   },

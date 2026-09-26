@@ -161,6 +161,34 @@ test('plans calibration standards through an intermediate', async ({
   await expectAccessible(page, '#panel-standards')
 })
 
+test('makes a phosphate buffer and a Tris buffer', async ({ page }) => {
+  await page.goto('/#buffer')
+  const buffer = panel(page, 'Buffer')
+  await buffer
+    .getByRole('combobox', { name: 'Buffer system' })
+    .selectOption('sodium-phosphate')
+  await buffer.getByRole('textbox', { name: 'pH' }).fill('7.4')
+  await buffer
+    .getByRole('textbox', { name: 'Buffer concentration' })
+    .fill('100')
+  await buffer.getByRole('textbox', { name: 'Final volume' }).fill('500')
+  const result = buffer.getByRole('region', { name: 'Result' })
+  await expect(result).toContainText(
+    'Weigh 1.389 g of sodium phosphate monobasic monohydrate',
+  )
+  await expect(result).toContainText('the pKa is 6.80')
+  await expectFitsScreen(page)
+  await expectAccessible(page, '#panel-buffer')
+
+  await buffer
+    .getByRole('combobox', { name: 'Buffer system' })
+    .selectOption('tris')
+  await expect(result).toContainText('of 1 M HCl')
+  // pH 7.4 set at 25 °C: Tris reads about 0.6 higher at 4 °C
+  await expect(result).toContainText(/reads about pH 7\.9\d\sat 4\s°C/)
+  await expectAccessible(page, '#panel-buffer')
+})
+
 test('remembers Learn mode across visits', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('radio', { name: 'Learn' }).check()
@@ -179,6 +207,7 @@ const TABS = [
   ['serial', 'Serial dilution'],
   ['standards', 'Calibration standards'],
   ['liquid', 'Concentrated liquid'],
+  ['buffer', 'Buffer'],
 ] as const
 
 for (const [id, name] of TABS) {

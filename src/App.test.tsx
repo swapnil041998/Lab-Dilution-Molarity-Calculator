@@ -62,6 +62,12 @@ describe('App', () => {
     ).toBeVisible()
   })
 
+  it('opens the buffer calculator from a link', () => {
+    window.history.replaceState(null, '', '/#buffer')
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Make a buffer' })).toBeVisible()
+  })
+
   it('keeps what was typed when switching tabs', async () => {
     const user = userEvent.setup()
     render(<App />)
