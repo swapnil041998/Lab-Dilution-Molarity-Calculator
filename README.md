@@ -26,7 +26,13 @@ Other checks, all run in CI on every push:
 npm run lint          # oxlint
 npm run format:check  # Prettier (npm run format to fix)
 npm run typecheck     # TypeScript
+npm run test:e2e      # end-to-end tests in a real browser (Playwright)
 ```
+
+The end-to-end tests build the app and drive it in Chromium on desktop and
+phone screen sizes, including automated accessibility scans (axe). Run
+`npx playwright install chromium` once first, or point
+`PLAYWRIGHT_CHROMIUM_PATH` at a Chromium you already have.
 
 The reagent library is also cross-checked against PubChem whenever it
 changes (`.github/workflows/verify-reagents.yml`). To run that check yourself
